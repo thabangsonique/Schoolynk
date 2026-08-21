@@ -1,7 +1,8 @@
-import { SupabaseClient } from "@supabase/supabase-js";
 import { supabase, supabaseAdmin } from "../config/supabaseClient.js";
-import { response } from "express";
-//ADMIN CONTROL.
+
+// ======================
+// ADMIN CONTROL.
+// ======================
 
 //CREATE A TEACHER
 export const createTeacher = async (req, res) => {
@@ -16,6 +17,7 @@ export const createTeacher = async (req, res) => {
       password,
       employee_number,
       class_id,
+      teacher_id,
     } = req.body;
 
     if (!email || !first_name || !last_name || !password) {
@@ -74,18 +76,27 @@ export const createTeacher = async (req, res) => {
       });
     }
 
-    //OPTIONAL ASSIGNING TEACHER TO A CLASS.
+    //OPTIONAL ASSIGNING TEACHER TO A CLASS if class id exists.
     if (class_id) {
-      await supabaseAdmin
+      const { error: assignError } = await supabaseAdmin
         .from("classes")
-        .insert({ teacher_id: teacherRecord.id });
+        .update({ teacher_id: teacherRecord.id })
+        .eq("id", class_id);
+
+      if (assignError) {
+        return res.status(400).json({
+          message: "Teacher created but failed to assign to class",
+          error: assignError.message,
+        });
+      }
     }
+    //ASSIGN teacher to class subjects table
 
     //RETURN ENTIRE TEACHER DATA .including assigned class.
     const { data: completeTeacher } = await supabaseAdmin
       .from("teachers")
       .select(
-        `id, employee_number, profiles(id,first_name,last_name,status,role, classes(id,name,grade))`,
+        `id, employee_number, profiles(id,first_name,last_name,status,role), classes(id,name,grade)`,
       )
       .eq("id", teacherRecord.id)
       .single();
@@ -114,7 +125,7 @@ export const getTeachers = async (req, res) => {
 
     if (error) {
       return res
-        .status(401)
+        .status(400)
         .json({ message: "Error fetching teachers", error });
     }
 
@@ -244,7 +255,7 @@ export const deleteTeacher = async (req, res) => {
       .single();
 
     if (findError || !teacher) {
-      return res.json({ message: "Teacher Not found" });
+      return res.stauts(404).json({ message: "Teacher Not found" });
     }
 
     //if the teacher is found. use the teacher's profile ID(authentication UUID),
@@ -286,5 +297,157 @@ export const deleteTeacher = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ===================
+// TEACHER CONTROL
+// ====================
+
+export const getMyLearners = async (req, res) => {
+  try {
+    //use the teacher's authenticated ID from the middleware since they are logged in.
+    const userId = req.user.id;
+
+    const { data: teacher, error } = await req.supabase
+      .from("teachers")
+      .select()
+      .eq("profile_id", userId)
+      .single();
+
+    if (error) {
+      return res
+        .status(400)
+        .json({ message: "Failed to fetch teacher record", error });
+    }
+
+    //fetch the class belonging to the teacher.
+    const { data: teacherClass, error: classTeacherError } = await req.supabase
+      .from("classes")
+      .select("id,name,grade")
+      .eq("teacher_id", teacher.id)
+      .maybeSingle();
+
+    if (classTeacherError) {
+      return res.status(400).json({
+        message: "Failed to fetch Class belonging to this teacher",
+        classTeacherError,
+      });
+    }
+
+    if (!teacherClass) {
+      return res
+        .status(404)
+        .json({ message: "No class assigned to this teacher" });
+    }
+
+    //fetch learners belonging to this class.
+    const { data: teacherLearners, error: fetchError } = await req.supabase
+      .from("learners")
+      .select(
+        `id,student_number,first_name,last_name,date_of_birth,address,parents(id,first_name,last_name,phone_number,relationship)`,
+      )
+      .eq("class_id", teacherClass.id);
+
+    console.log("teacher's class id:", teacherClass.id);
+
+    if (fetchError) {
+      return res
+        .status(400)
+        .json({ message: "Failed to fetch teacher's learners", fetchError });
+    }
+
+    return res.status(200).json({
+      message: "Teacher's Learners fetched successfully",
+      teacherLearners,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error, get-my-learners",
+      error: error.message,
+    });
+  }
+};
+
+//RETRIEVE TEACHER CLASS.
+export const getMyClasses = async (req, res) => {
+  //use logged Auth in teacher ID.
+  try {
+    const userId = req.user.id; // this is same as the profile_id
+
+    const { data: teacherRecord, error } = await req.supabase
+      .from("teachers")
+      .select("id")
+      .eq("profile_id", userId)
+      .single();
+
+    if (error || !teacherRecord) {
+      return res
+        .status(400)
+        .json({ message: "Failed to fecth teacher's Record", error });
+    }
+
+    //fetch classes +  that belong to this teacher.
+    const { data: teacherClasses, error: classFetchError } = await req.supabase
+      .from("classes")
+      .select(
+        `id, 
+        name,
+         grade,
+         learners(
+         id,
+         student_number,
+         first_name,
+         last_name,
+         date_of_birth,
+         address,
+         parents(
+          id,
+          first_name,
+          last_name,
+          phone_number,
+          relationship
+          )),
+        class_subjects(
+        id,
+        subjects(
+         id,
+         name,
+         description)), teachers(id, profiles(id,first_name, last_name))`,
+      )
+      .eq("teacher_id", teacherRecord.id)
+      .maybeSingle();
+
+    if (classFetchError) {
+      return res.status(400).json({ message: "Failed to fecth class" });
+    }
+
+    if (!teacherClasses) {
+      return res
+        .status(404)
+        .json({ message: "No class assigned to this teacher" });
+    }
+
+    //consolidate response
+    const response = {
+      ...teacherClasses,
+      learners: teacherClasses.learners ?? [],
+      subjects: (teacherClasses.class_subjects ?? []).map((cs) => ({
+        assignment_id: cs.id,
+        ...cs.subjects,
+        teacher: cs.teachers
+          ? { id: cs.teachers.id, ...cs.teachers.profiles }
+          : null,
+      })),
+    };
+    delete response.class_subjects; //remove the subjects duplicate
+
+    return res
+      .status(200)
+      .json({ message: "Class fecthed successfully", response });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };

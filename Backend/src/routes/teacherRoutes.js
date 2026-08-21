@@ -2,6 +2,8 @@ import { Router } from "express";
 import {
   createTeacher,
   deleteTeacher,
+  getMyClasses,
+  getMyLearners,
   getTeacherById,
   getTeachers,
   updateTeacherById,
@@ -12,6 +14,7 @@ import { LogIn, signUpAdmin } from "../controllers/authController.js";
 
 const router = Router();
 
+//ADMIN ROUTES
 router.post(
   "/teachers",
   authenticatedUser,
@@ -37,4 +40,8 @@ router.delete(
   requireRole("admin"),
   deleteTeacher,
 );
+
+//TEACHER ROUTES.
+router.get("/get-my-learners", authenticatedUser, getMyLearners);
+router.get("/my-classes", authenticatedUser, getMyClasses);
 export default router;
