@@ -126,7 +126,7 @@ export const getLearners = async (req, res) => {
     let query = supabaseAdmin
       .from("learners")
       .select(
-        `id, student_number,first_name, last_name,date_of_birth,address,classes(id,name,grade),parents(id,first_name,last_name,phone_number,relationship)`,
+        `id, student_number,first_name, last_name,date_of_birth,address,updated_at,classes(id,name,grade),parents(id,first_name,last_name,phone_number,relationship)`,
       );
 
     if (class_id) {
@@ -259,4 +259,4 @@ export const deleteLearner = async (req, res) => {
   }
 };
 
-//DELETING A PARENT.
+//LEARNER ATTENDANCE

@@ -121,7 +121,8 @@ export const getTeachers = async (req, res) => {
       .from("teachers")
       .select(
         `id, employee_number, profiles(id,first_name, last_name, status, role), classes(id, name, grade)`,
-      );
+      )
+      .eq("profiles.status", "active");
 
     if (error) {
       return res
@@ -247,7 +248,7 @@ export const deleteTeacher = async (req, res) => {
   try {
     const teacherId = req.params.id;
 
-    //fetch teacher auth ID, which is teacher Profile ID
+    // Fetch the teacher's profile ID before changing any related records.
     const { data: teacher, error: findError } = await supabaseAdmin
       .from("teachers")
       .select("id, profile_id")
@@ -255,48 +256,67 @@ export const deleteTeacher = async (req, res) => {
       .single();
 
     if (findError || !teacher) {
-      return res.stauts(404).json({ message: "Teacher Not found" });
+      return res.status(404).json({ message: "Teacher Not found" });
     }
 
-    //if the teacher is found. use the teacher's profile ID(authentication UUID),
-    //delete teacher
+    const authTeacherId = teacher.profile_id;
 
-    const authTeacherId = teacher.profile_id; //authenticated teacher id
-    //Unassign teachers from the classes they used to teach.
-    await supabaseAdmin
+    // Keep historical records, but remove this teacher from current assignments.
+    const { error: classError } = await supabaseAdmin
       .from("classes")
       .update({ teacher_id: null })
       .eq("teacher_id", teacherId);
 
-    //delete the teacher from the teachers table.
-    const { error: deleteTeacherError } = await supabaseAdmin
-      .from("teachers")
-      .delete()
-      .eq("id", teacherId);
-
-    if (deleteTeacherError) {
-      return res
-        .status(400)
-        .json({ message: "Failed to delete teacher", error });
+    if (classError) {
+      return res.status(400).json({
+        message: "Failed to unassign teacher from classes",
+        error: classError,
+      });
     }
 
-    //delete teacher from the profiles table.
-    if (authTeacherId) {
-      const { error: profileDeleteError } = await supabaseAdmin
-        .from("profiles")
-        .delete()
-        .eq("id", authTeacherId);
+    const { error: classSubjectError } = await supabaseAdmin
+      .from("class_subjects")
+      .update({ teacher_id: null })
+      .eq("teacher_id", teacherId);
+
+    if (classSubjectError) {
+      return res.status(400).json({
+        message: "Failed to unassign teacher from class subjects",
+        error: classSubjectError,
+      });
     }
 
-    //delete from supabase authentication.
-    const { error: authDeleteError } =
-      await supabaseAdmin.auth.admin.deleteUser(authTeacherId);
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .update({ status: "inactive" })
+      .eq("id", authTeacherId);
+
+    if (profileError) {
+      return res.status(400).json({
+        message: "Failed to deactivate teacher profile",
+        error: profileError,
+      });
+    }
+
+    const { error: authError } =
+      await supabaseAdmin.auth.admin.updateUserById(authTeacherId, {
+        ban_duration: "876000h",
+      });
+
+    if (authError) {
+      return res.status(400).json({
+        message: "Failed to deactivate teacher authentication",
+        error: authError,
+      });
+    }
 
     return res.status(200).json({
-      message: "Teacher and assocciated accounts deleted successfully",
+      message: "Teacher deactivated successfully",
     });
   } catch (error) {
-    return res.status(500).json({ message: "Internal server error" });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 

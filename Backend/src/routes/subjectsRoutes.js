@@ -4,28 +4,38 @@ import { authenticatedUser } from "../middlewares/authMiddleware/authMiddleware.
 import { requireRole } from "../middlewares/authMiddleware/requireRole.js";
 import {} from "../controllers/learnersController.js";
 import {
-  createClass,
-  deleteClass,
-  getAllClasses,
-  updateClass,
-} from "../controllers/classController.js";
+  createSubject,
+  deleteSubject,
+  getAllSubjects,
+  updateSubject,
+} from "../controllers/subjectsController.js";
 
 const router = Router();
 
 //ADMIN
-router.post("/classes", authenticatedUser, requireRole("admin"), createClass);
-router.get("/classes", authenticatedUser, requireRole("admin"), getAllClasses);
-router.patch(
-  "/classes/:id",
+router.get(
+  "/subjects",
   authenticatedUser,
   requireRole("admin"),
-  updateClass,
+  getAllSubjects,
 );
 
-router.delete(
-  "/classes/:id",
+router.post(
+  "/subjects",
   authenticatedUser,
   requireRole("admin"),
-  deleteClass,
+  createSubject,
+);
+router.patch(
+  "/subjects/:id",
+  authenticatedUser,
+  requireRole("admin"),
+  updateSubject,
+);
+router.delete(
+  "/subjects/:id",
+  authenticatedUser,
+  requireRole("admin"),
+  deleteSubject,
 );
 export default router;

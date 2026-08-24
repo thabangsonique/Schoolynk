@@ -15,7 +15,7 @@ export const requireRole = (...allowedRoles) => {
       //otherwise check the role of this user.
       const { data: profile, error } = await req.supabase
         .from("profiles")
-        .select("role")
+        .select("role, status")
         .eq("id", req.user.id)
         .single();
 
@@ -23,6 +23,10 @@ export const requireRole = (...allowedRoles) => {
         console.log("PROFILE LOOKUP");
         console.log("profile not found", profile, error);
         return res.status(404).json({ message: "User not found." });
+      }
+
+      if (profile.status === "inactive") {
+        return res.status(403).json({ message: "Account is deactivated" });
       }
 
       if (!allowedRoles.includes(profile.role)) {

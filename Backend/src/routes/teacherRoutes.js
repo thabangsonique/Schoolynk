@@ -11,6 +11,7 @@ import {
 import { authenticatedUser } from "../middlewares/authMiddleware/authMiddleware.js";
 import { requireRole } from "../middlewares/authMiddleware/requireRole.js";
 import { LogIn, signUpAdmin } from "../controllers/authController.js";
+import { clockIn, clockOut } from "../controllers/staffAttendanceController.js";
 
 const router = Router();
 
@@ -44,4 +45,7 @@ router.delete(
 //TEACHER ROUTES.
 router.get("/get-my-learners", authenticatedUser, getMyLearners);
 router.get("/my-classes", authenticatedUser, getMyClasses);
+router.post("/clock-in", authenticatedUser, clockIn);
+router.post("/clock-out", authenticatedUser, clockOut);
+//
 export default router;

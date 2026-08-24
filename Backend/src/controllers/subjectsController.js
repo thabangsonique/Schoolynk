@@ -28,5 +28,260 @@ export const getAllSubjects = async (req, res) => {
         `,
       )
       .order("name"); //alphabetical order
-  } catch {}
+
+    if (error) {
+      return res.status(400).json({
+        message: "Failed to fetch subjects",
+        error: error.message,
+      });
+    }
+
+    //grab onject dispay, show subject, class of the subject, and teacher of the subject.
+    const result = (subjects ?? []).map((subject) => ({
+      id: subject.id,
+      name: subject.name,
+      description: subject.description,
+      classes: (subject.class_subjects ?? []).map((cs) => ({
+        assignment_id: cs.id,
+        ...cs.classes,
+        // cs.classes.teachers is whoever teaches THIS subject to THIS class
+        subject_teacher: cs.classes?.teachers
+          ? {
+              id: cs.classes.teachers.id,
+              ...cs.classes.teachers.profiles,
+            }
+          : null,
+      })),
+    }));
+
+    return res
+      .status(200)
+      .json({ message: "Subjects fetched successfully", result });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+//ADDING OR CREATING A NEW SUBJECT.
+export const createSubject = async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      code,
+      lead_teacher_id,
+      weekly_hours = 0,
+      classroom_ids = [],
+    } = req.body;
+
+    if (!name) {
+      return res
+        .status(400)
+        .json({ message: "Name is required to create subject" });
+    }
+
+    //create the subject in the subjects table.
+    const { data: subject, error: subjectError } = await supabaseAdmin
+      .from("subjects")
+      .insert({
+        name,
+        description: description || null,
+        code: code || null,
+        lead_teacher_id: lead_teacher_id || null,
+      })
+      .select()
+      .single();
+
+    if (subjectError) {
+      return res
+        .status(400)
+        .json({ message: "Failed to create subject", subjectError });
+    }
+
+    //assign created subject to the select classrooms.
+    //check classrooms were selected.
+    let classSubjectAssignments = []; //class_ids
+
+    if (classroom_ids.length >= 0) {
+      const classRows = classroom_ids.map((class_id) => ({
+        class_id,
+        subject_id: subject.id,
+        teacher_id: lead_teacher_id || null,
+        weekly_hours,
+      }));
+
+      //assign subjects to the selected classes.
+      const { data, error: assignError } = await supabaseAdmin
+        .from("class_subjects")
+        .upsert(classRows, { onConflict: "class_id, subject_id" }).select(`id,
+           weekly_hours,
+           classes(id, name, grade),
+           subjects(id, name, description, code),
+           teachers(id, profiles(id, first_name, last_name))`);
+
+      if (assignError) {
+        return res.status(400).json({
+          message: "Subject created but failed to assign to classrooms",
+          error: assignError.message,
+        });
+      }
+
+      classSubjectAssignments = data ?? [];
+    }
+
+    return res.status(201).json({
+      message: "Subject created successfully",
+      subject,
+      classSubjectAssignments,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+export const updateSubject = async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      code,
+      lead_teacher_id,
+      weekly_hours = 0,
+      classroom_ids = [],
+    } = req.body;
+
+    const subjectId = req.params.id;
+
+    let subjectUpdate = {};
+
+    if (name !== undefined) subjectUpdate.name = name;
+    if (description !== undefined) subjectUpdate.description = description;
+    if (code !== undefined) subjectUpdate.code = code;
+
+    if (lead_teacher_id !== undefined)
+      subjectUpdate.lead_teacher_id = lead_teacher_id;
+
+    const { data: updateSubject, error } = await supabaseAdmin
+      .from("subjects")
+      .update(subjectUpdate)
+      .eq("id", subjectId)
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      return res.status(400).json({
+        message: "Failed to update subject",
+        error: error.message,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Subject Updated successfully",
+      updateSubject,
+    });
+
+    //update class subjects table
+    let classSubjectUpdate = {};
+
+    if (lead_teacher_id !== undefined)
+      classSubjectUpdate.lead_teacher_id = lead_teacher_id;
+    if (classroom_ids !== undefined)
+      classSubjectUpdate.classroom_ids = classroom_ids;
+    if (weekly_hours !== undefined)
+      classSubjectUpdate.weekly_hours = weekly_hours;
+
+    const { data: classSubUpdate, error: updateError } = await supabaseAdmin
+      .from("class_subjects")
+      .update(classSubjectUpdate)
+      .eq("id", subjectId)
+      .select()
+      .maybeSingle();
+
+    if (updateError) {
+      return res.status(400).json({
+        message: "Failed to update class subject info",
+        updateError: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      message: "subject updated successfully",
+      updateSubject,
+      classSubUpdate,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+//DELETING A CLASS SUBJECT.
+export const deleteSubject = async (req, res) => {
+  try {
+    const subjectId = req.params.id;
+
+    //check subject exists.
+    const { data: subject, error: findError } = await supabaseAdmin
+      .from("subjects")
+      .select("id, name")
+      .eq("id", subjectId)
+      .maybeSingle();
+
+    if (findError) {
+      return res.status(400).json({
+        message: "Error looking up subject",
+        error: findError.message,
+      });
+    }
+
+    if (!subject) {
+      return res.status(404).json({ message: "Subject not found." });
+    }
+
+    //chack if the subject is assigned to classes.
+    const { count, countError } = await supabaseAdmin
+      .from("class_subjects")
+      .select("id", { count: "exact", head: true })
+      .eq("subject_id", subjectId);
+
+    if (countError) {
+      return res.status(400).json({
+        message: "Failed to check subject assignments",
+        error: countError.message,
+      });
+    }
+
+    if (count > 0) {
+      return res.status(409).json({
+        message: `Connot delete subject ${subject.name}: it is assigned to ${count} class(es).Remove those assignments first`,
+      });
+    }
+
+    //delete subject from subjects table.
+    const { error: deleteError } = await supabaseAdmin
+      .from("subjects")
+      .delete()
+      .eq("id", subjectId);
+
+    if (deleteError) {
+      return res.status(400).json({
+        message: "Failed to delete subject",
+        error: deleteError.message,
+      });
+    }
+
+    return res.status(200).json({ message: "Subject deleted successfully." });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Internal server error:", error: error.message });
+  }
 };
