@@ -258,5 +258,3 @@ export const deleteLearner = async (req, res) => {
     return res.status(500).json({ message: "Failed to delete learner" });
   }
 };
-
-//LEARNER ATTENDANCE

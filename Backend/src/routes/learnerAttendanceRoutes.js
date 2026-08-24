@@ -13,6 +13,7 @@ import {
   bulkMarkAttendance,
   getTodayAttendance,
   markLearnerAttendance,
+  submitDailyAttendance,
 } from "../controllers/learnerAttendanceController.js";
 
 const router = Router();
@@ -21,4 +22,5 @@ const router = Router();
 router.post("/learner-attendance", authenticatedUser, markLearnerAttendance);
 router.post("/learner-bulk-attendance", authenticatedUser, bulkMarkAttendance);
 router.get("/learner-attendance", authenticatedUser, getTodayAttendance);
+router.post("/submit-register", authenticatedUser, submitDailyAttendance);
 export default router;

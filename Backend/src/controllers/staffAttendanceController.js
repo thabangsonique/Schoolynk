@@ -242,7 +242,7 @@ export const clockOut = async (req, res) => {
         clock_out: nowClockOut.toISOString(),
         status: "clocked_out",
       })
-      .eq("teacher_id", teacher.id)
+      .eq("id", clockedIn.id)
       .select()
       .single();
 
@@ -266,6 +266,108 @@ export const clockOut = async (req, res) => {
       ...clockedIn,
       teacher_name: `${teacher.profiles.first_name} ${teacher.profiles.last_name}`,
       hours_worked: parseFloat(hoursWorked),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error. clocking-out",
+      error: error.message,
+    });
+  }
+};
+
+//VIEW MY ATTENDANCE(TEACHER).
+export const viewMyAttendance = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const { data: teacher, error: errorTeacher } = await supabaseAdmin
+      .from("teachers")
+      .select("id")
+      .eq("profile_id", userId)
+      .single();
+
+    if (errorTeacher) {
+      return res
+        .status(400)
+        .json({ message: "Failed to fetch teacher's records" });
+    }
+
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found." });
+    }
+
+    //fetch teacher staff attendance.
+    const { data: teacherHistory, error: errorHistory } = await supabaseAdmin
+      .from("staff_attendance")
+      .select("id, date, clock_in,clock_out,status")
+      .eq("teacher_id", teacher.id)
+      .order("date", { ascending: false });
+
+    if (errorHistory) {
+      return res.status(400).json({
+        message: "Failed to fetch teacher attendance history",
+        errorHistory,
+      });
+    }
+
+    if (!teacherHistory) {
+      return res.status(400).json({
+        message: "No attendance record found. You need to build record first",
+      });
+    }
+
+    const recordsWithHours = (teacherHistory ?? []).map((record) => {
+      let hoursWorked = null;
+      if (record.clock_in && record.clock_out) {
+        const ms = new Date(record.clock_out) - new Date(record.clock_in);
+        hoursWorked = parseFloat((ms / (1000 * 60 * 60)).toFixed(2));
+      }
+      return { ...record, hours_worked: hoursWorked };
+    });
+
+    //grab length across all records.
+    const totalRecords = recordsWithHours.length;
+
+    const completedRecords = recordsWithHours.filter(
+      (r) => r.hours_worked !== null,
+    );
+
+    const monthlyHours = parseFloat(
+      completedRecords.reduce((sum, r) => sum + r.hours_worked, 0).toFixed(1),
+    );
+
+    const completedShifts = completedRecords.length;
+
+    //filter for late status
+    const lateArrivals = recordsWithHours.filter(
+      (r) => r.status === "late",
+    ).length;
+
+    const onTimeRecords = totalRecords - lateArrivals;
+
+    //calculate percentage.
+    const onTimeRate =
+      totalRecords > 0
+        ? parseFloat(((onTimeRecords / totalRecords) * 100).toFixed(1))
+        : 0;
+
+    const avgHours =
+      completedShifts > 0
+        ? parseFloat((monthlyHours / completedShifts).toFixed(1))
+        : 0;
+
+    return res.status(200).json({
+      message: "Attendance history fetched successfully",
+      summary: {
+        total_records: totalRecords,
+        monthly_hours: monthlyHours,
+        completed_shifts: completedShifts,
+        late_arrivals: lateArrivals,
+        on_time_records: onTimeRecords,
+        on_time_rate: onTimeRate,
+        average_hours_per_shift: avgHours,
+      },
+      records: recordsWithHours,
     });
   } catch (error) {
     return res.status(500).json({

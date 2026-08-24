@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../config/supabaseClient.js";
+import { supabase, supabaseAdmin } from "../config/supabaseClient.js";
 
 //marking single learner present or upsent.
 export const markLearnerAttendance = async (req, res) => {
@@ -447,5 +447,60 @@ export const submitDailyAttendance = async (req, res) => {
 
     //if not yet submitted-check unmarked learners.
     //fetch all learners from attendance record.
-  } catch (error) {}
+    const { data: markedRecord } = await supabaseAdmin
+      .from("learner_attendance")
+      .select("learner_id, status")
+      .eq("date", today)
+      .in("learner_id", learnerIds);
+
+    const markedIds = new Set((markedRecord ?? []).map((r) => r.learner_id));
+    //compare recorded class learners against class learners.
+    const unmarkedLearners = learners.filter((l) => !markedIds.has(l.id));
+
+    if (unmarkedLearners > 0) {
+      return res.status(400).json({
+        message: `Cannot submit - ${unmarkedLearners.length} learner(s) are unmarked.`,
+        unmarked: unmarkedLearners.map((learner) => ({
+          id: learner.id,
+          name: `${learner.first_name} ${learner.last_name}`,
+        })),
+      });
+    }
+
+    //stamp records submition.
+    const { data, error: updateError } = await supabaseAdmin
+      .from("learner_attendance")
+      .update({
+        submitted_at: new Date().toISOString(), //returns dat and time. in timestamptz format
+
+        submitted_by: teacher.id,
+      })
+      .in("learner_id", learnerIds)
+      .select();
+
+    if (updateError) {
+      return res.status(400).json({
+        message: "Failed to submit attendance",
+        error: updateError.message,
+      });
+    }
+
+    //summary submition display.
+    const present = data.map((r) => r.status === "present").length;
+    const absent = data.map((r) => r.status === "absent").length;
+
+    return res.status(200).json({
+      message: `Attendance register for class ${teacherClass.name} has been submitted.register is now locked`,
+      sumarry: {
+        total: data.length,
+        present,
+        absent,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
 };
