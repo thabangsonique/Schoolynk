@@ -8,6 +8,8 @@ import {
   Eye,
   EyeClosed,
   ArrowRight,
+  Loader,
+  Loader2,
 } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { supabase } from "../config/supabase.js";
@@ -22,7 +24,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
 
   //handle form submit.
-  const handlesubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     setErrorMessage("");
@@ -60,7 +62,7 @@ export default function Login() {
       return;
     }
 
-    if (profile.status !== "selectedRole") {
+    if (profile.role !== selectedRole) {
       setErrorMessage(
         `This account is registered as ${profile.role} not as ${selectedRole}`,
       );
@@ -76,7 +78,7 @@ export default function Login() {
     }
 
     if (profile.role === "teacher") {
-      navigate("/teachers/dashboard");
+      navigate("/teacher/dashboard");
     }
   };
   return (
@@ -136,7 +138,7 @@ export default function Login() {
           </div>
 
           {/* //actual form */}
-          <form onSubmit={handlesubmit} className="w-full mt-7">
+          <form onSubmit={handleSubmit} className="w-full mt-7">
             {/* email */}
             <label htmlFor="email" className="text-white">
               Email Address
@@ -169,8 +171,8 @@ export default function Login() {
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password..."
                 className="text-white w-full focus:outline-none ml-5 "
               />
@@ -208,13 +210,21 @@ export default function Login() {
               type="submit"
               className="flex items-center gap-3 justify-center w-full primary-btn"
             >
-              <span className="font-bold text-lg">Sign in as Admin</span>
+              <span className="font-bold text-lg">
+                {isLoading ? (
+                  <Loader2 className="animate-spin" size={32} />
+                ) : selectedRole === "admin" ? (
+                  "Sign in as Admin"
+                ) : (
+                  "Sign in as Teacher"
+                )}
+              </span>
               <ArrowRight />
             </button>
           </form>
 
           {/* error message */}
-          <p className="text-primary">{errorMessage}</p>
+          <p className="text-primary mt-5">{errorMessage}</p>
 
           {/* line */}
           <div className="w-full h-0.5 bg-text-secondary/20  mt-8" />

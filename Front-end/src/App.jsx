@@ -8,7 +8,14 @@ import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import { Loader } from "lucide-react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
+import { useAuth } from "./context/authContext.jsx";
+import AdminDashboardHome from "./pages/admin-pages/AdminDashboardHome.jsx.jsx";
+import Teachers from "./pages/admin-pages/Teachers.jsx";
+import Learners from "./pages/admin-pages/Learners.jsx";
+import Classes from "./pages/admin-pages/Classes.jsx";
+import Subjects from "./pages/admin-pages/Subjects.jsx";
+import Attendance from "./pages/admin-pages/Attendance.jsx";
 
 //loading ui.
 const LoadingPage = () => {
@@ -22,6 +29,43 @@ const LoadingPage = () => {
 
 const HomeRedirect = () => {
   //grab user login and profile from authContext provider,
+  const { user, role, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingPage />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (role === "admin") {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  if (role === "teacher") {
+    return <Navigate to="/teacher/dashboard" replace />;
+  }
+
+  return <p>Your account does not have a valid role</p>;
+};
+
+const ProtectedRoutes = ({ allowedRoles, children }) => {
+  const { user, role, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingPage />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!allowedRoles.includes(role)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
 };
 
 function App() {
@@ -29,28 +73,35 @@ function App() {
     <Routes>
       {/* landing page */}
       <Route path="/" element={<HomeRedirect />} />
-
       {/* login page- if user not logged in */}
-      <Route path="/login" element={<LoginPage />} />
-
+      <Route path="/login" element={<Login />} />
       {/* protected routes */}
       <Route
         path="/admin/dashboard"
         element={
-          <ProtectedRoute allowedRoutes={["admin"]}>
+          <ProtectedRoutes allowedRoles={["admin"]}>
             <AdminDashboard />
-          </ProtectedRoute>
+          </ProtectedRoutes>
         }
-      />
-
+      >
+        {/* all the child routes for admin dashboard */}
+        <Route index element={<AdminDashboardHome />} />
+        <Route path="teachers" element={<Teachers />} />
+        <Route path="learners" element={<Learners />} />
+        <Route path="classes" element={<Classes />} />
+        <Route path="subjects" element={<Subjects />} />
+        <Route path="attendance" element={<Attendance />} />
+      </Route>
       <Route
         path="/teacher/dashboard"
         element={
-          <ProtectedRoute allowedRoutes={["teacher"]}>
+          <ProtectedRoutes allowedRoles={["teacher"]}>
             <TeacherDashboard />
-          </ProtectedRoute>
+          </ProtectedRoutes>
         }
       />
+      {/* redirect user from unknown route to the home page */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

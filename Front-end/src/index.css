@@ -5,6 +5,7 @@
   --color-background: #1b1d24;
   --color-primary: #f5bf28;
   --color-card: #292b34;
+  --color-card-2: #22242c;
   --color-text-green: #35c98a;
   --color-text-secondary: #a6a8b1;
 }
@@ -16,4 +17,12 @@ body {
 
 .primary-btn {
   @apply bg-primary mt-5 rounded-xl py-4 hover:scale-103 hover:cursor-pointer shadow-xl transition-all duration-300;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
 }
