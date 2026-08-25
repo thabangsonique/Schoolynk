@@ -1,1 +1,19 @@
+@import url("https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,400..700;1,400..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Manrope:wght@200..800&family=Outfit:wght@100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
 @import "tailwindcss";
+
+@theme {
+  --color-background: #1b1d24;
+  --color-primary: #f5bf28;
+  --color-card: #292b34;
+  --color-text-green: #35c98a;
+  --color-text-secondary: #a6a8b1;
+}
+
+html,
+body {
+  font-family: "Roboto", sans-serif;
+}
+
+.primary-btn {
+  @apply bg-primary mt-5 rounded-xl py-4 hover:scale-103 hover:cursor-pointer shadow-xl transition-all duration-300;
+}
