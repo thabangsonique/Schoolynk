@@ -208,7 +208,7 @@ export default function Login() {
             {/* submit button */}
             <button
               type="submit"
-              className="flex items-center gap-3 justify-center w-full primary-btn"
+              className="flex items-center mt-5 py-5 gap-3 justify-center w-full primary-btn"
             >
               <span className="font-bold text-lg">
                 {isLoading ? (

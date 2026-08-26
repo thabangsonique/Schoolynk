@@ -298,10 +298,12 @@ export const deleteTeacher = async (req, res) => {
       });
     }
 
-    const { error: authError } =
-      await supabaseAdmin.auth.admin.updateUserById(authTeacherId, {
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+      authTeacherId,
+      {
         ban_duration: "876000h",
-      });
+      },
+    );
 
     if (authError) {
       return res.status(400).json({
@@ -469,5 +471,75 @@ export const getMyClasses = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Internal server error", error: error.message });
+  }
+};
+
+//UPDATE AVATAR.
+export const insertAvater = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    //check if image was provided.
+    if (!req.file) {
+      return res.status(400).json({
+        message: "Please provide a profile image",
+      });
+    }
+
+    const file = req.file;
+
+    //unique path for user's avatar
+    const filePath = `${userId}/avatar-${Date.now()}-${file.originalname}`;
+
+    //upload user image to supabase storage
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("profile-avatars")
+      .upload(filePath, file.buffer, {
+        contentType: file.mimetype,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error(uploadError);
+
+      return res.status(500).json({
+        message: "Failed to upload profile image",
+      });
+    }
+
+    //store image in avatar table
+    const { data, error: avatarError } = await supabaseAdmin
+      .from("profile_avatars")
+      .upsert(
+        {
+          user_id: userId,
+          avatar_url: filePath,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "user_id",
+        },
+      )
+      .select()
+      .single();
+
+    if (avatarError) {
+      console.error(avatarError);
+
+      return res.status(500).json({
+        message: "Image uploaded but failed to save avatar information",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Profile image updated successfully",
+      avatar: data,
+    });
+  } catch (error) {
+    console.error("Upload avatar error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };

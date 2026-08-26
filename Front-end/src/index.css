@@ -16,7 +16,7 @@ body {
 }
 
 .primary-btn {
-  @apply bg-primary mt-5 rounded-xl py-4 hover:scale-103 hover:cursor-pointer shadow-xl transition-all duration-300;
+  @apply bg-primary rounded-xl py-3 hover:scale-103 hover:cursor-pointer shadow-xl transition-all duration-300;
 }
 
 .hide-scrollbar {

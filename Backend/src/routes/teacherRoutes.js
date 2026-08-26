@@ -6,6 +6,7 @@ import {
   getMyLearners,
   getTeacherById,
   getTeachers,
+  insertAvater,
   updateTeacherById,
 } from "../controllers/teachersController.js";
 import { authenticatedUser } from "../middlewares/authMiddleware/authMiddleware.js";
@@ -52,6 +53,7 @@ router.get("/my-classes", authenticatedUser, getMyClasses);
 router.post("/clock-in", authenticatedUser, clockIn);
 router.post("/clock-out", authenticatedUser, clockOut);
 router.get("/my-attendance", authenticatedUser, viewMyAttendance);
+router.get("/avatar", authenticatedUser, insertAvater);
 
 //
 export default router;
