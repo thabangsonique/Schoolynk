@@ -219,7 +219,7 @@ export default function Login() {
                   "Sign in as Teacher"
                 )}
               </span>
-              <ArrowRight />
+              {!isLoading && <ArrowRight />}
             </button>
           </form>
 

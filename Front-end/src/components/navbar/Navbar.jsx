@@ -29,7 +29,7 @@ export default function Navbar() {
 
   return (
     <div
-      className={`flex justify-between items-center shadow-lg py-4 px-10 bg-card-2 ${isSidebarCollapsed && "pl-30"}`}
+      className={`flex sticky top-0 z-50 justify-between items-center shadow-lg py-4 px-10 bg-card-2 ${isSidebarCollapsed && "pl-30"}`}
     >
       {/* left-side */}
       <h1 className="text-text-secondary/40 text-xl capitalize font-bold">

@@ -56,7 +56,7 @@ export default function AdminSidebar() {
   const isSidebarCollapsed = useSelector(
     (state) => state.global.isSidebarCollapsed,
   );
-  const sidebarClasses = `bg-card-2 fixed hide-scrollbar flex flex-col overflow-y-auto h-[100%] py-5 border-r border-text-secondary/10 transition-all duration-300 ${isSidebarCollapsed ? "w-[100px]" : "w-[300px]"}`;
+  const sidebarClasses = `bg-card-2 fixed hide-scrollbar z-60 flex flex-col overflow-y-auto h-[100%] py-5 border-r border-text-secondary/10 transition-all duration-300 ${isSidebarCollapsed ? "w-[100px]" : "w-[300px]"}`;
   return (
     <div className={sidebarClasses}>
       {/* //header section. */}

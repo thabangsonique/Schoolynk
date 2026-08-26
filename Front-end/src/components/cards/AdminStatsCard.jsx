@@ -3,7 +3,7 @@ import React from "react";
 
 export default function AdminStatsCard() {
   return (
-    <div className="bg-card-2 p-6 rounded-2xl border border-text-secondary/10">
+    <div className="bg-card-2 p-6 rounded-2xl border border-text-secondary/10 hover:cursor-pointer hover:border-primary/40 transition-all duration-300">
       {/* header */}
       <div className="flex items-start justify-between">
         <span className="text-text-secondary text-lg ">Total Teachers</span>
