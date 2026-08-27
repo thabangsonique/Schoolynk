@@ -78,6 +78,110 @@ export const getAllClasses = async (req, res) => {
   }
 };
 
+// ADMIN DASHBOARD: classroom attendance and enrolment summary for one day.
+export const getClassroomOverview = async (req, res) => {
+  try {
+    const requestedDate =
+      req.query.date || new Date().toISOString().split("T")[0];
+
+    const { data: classes, error: classesError } = await supabaseAdmin
+      .from("classes")
+      .select(
+        "id,name,grade,teachers(id,profiles(first_name,last_name))",
+      )
+      .order("grade", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (classesError) {
+      return res.status(400).json({
+        message: "Failed to fetch classes for overview",
+        error: classesError.message,
+      });
+    }
+
+    const { data: learners, error: learnersError } = await supabaseAdmin
+      .from("learners")
+      .select("id,class_id");
+
+    if (learnersError) {
+      return res.status(400).json({
+        message: "Failed to fetch learners for class overview",
+        error: learnersError.message,
+      });
+    }
+
+    const { data: attendanceRecords, error: attendanceError } =
+      await supabaseAdmin
+        .from("learner_attendance")
+        .select("learner_id,status")
+        .eq("date", requestedDate);
+
+    if (attendanceError) {
+      return res.status(400).json({
+        message: "Failed to fetch attendance for class overview",
+        error: attendanceError.message,
+      });
+    }
+
+    const learnersByClass = new Map();
+    for (const learner of learners ?? []) {
+      const classLearners = learnersByClass.get(learner.class_id) ?? [];
+      classLearners.push(learner);
+      learnersByClass.set(learner.class_id, classLearners);
+    }
+
+    const attendanceByLearner = new Map(
+      (attendanceRecords ?? []).map((record) => [record.learner_id, record]),
+    );
+
+    const overview = (classes ?? []).map((classroom) => {
+      const classLearners = learnersByClass.get(classroom.id) ?? [];
+      let presentCount = 0;
+      let absentCount = 0;
+      let pendingCount = 0;
+
+      for (const learner of classLearners) {
+        const status = attendanceByLearner.get(learner.id)?.status;
+
+        if (status === "present") presentCount += 1;
+        else if (status === "absent") absentCount += 1;
+        else pendingCount += 1;
+      }
+
+      const learnerCount = classLearners.length;
+      const teacherProfile = classroom.teachers?.profiles;
+
+      return {
+        id: classroom.id,
+        name: classroom.name,
+        grade: classroom.grade,
+        teacher_name: teacherProfile
+          ? `${teacherProfile.first_name} ${teacherProfile.last_name}`
+          : null,
+        learner_count: learnerCount,
+        present_count: presentCount,
+        absent_count: absentCount,
+        pending_count: pendingCount,
+        attendance_percentage:
+          learnerCount > 0
+            ? Number(((presentCount / learnerCount) * 100).toFixed(1))
+            : 0,
+      };
+    });
+
+    return res.status(200).json({
+      date: requestedDate,
+      total_classes: overview.length,
+      classes: overview,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error fetching classroom overview",
+      error: error.message,
+    });
+  }
+};
+
 //UPDATE A CLASS.
 export const updateClass = async (req, res) => {
   try {

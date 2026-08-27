@@ -8,18 +8,19 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-
-const data = [
-  { day: "Mon", attendance: 95 },
-  { day: "Tue", attendance: 94.5 },
-  { day: "Wed", attendance: 96 },
-  { day: "Thu", attendance: 94 },
-  { day: "Fri", attendance: 92.5 },
-  { day: "Sat", attendance: 97.8 },
-  { day: "Sun", attendance: 97.5 },
-];
+import { useGetWeeklyLearnerAttendanceQuery } from "../../features/api";
 
 export default function AttendanceChart() {
+  const { data: weeklyData, isLoading } = useGetWeeklyLearnerAttendanceQuery(
+    undefined,
+    {
+      refetchOnMountOrArgChange: true,
+    },
+  );
+
+  //days only from weekly data
+  const data = weeklyData?.days ?? [];
+  const weeklyAverage = weeklyData?.weekly_average ?? 0;
   return (
     <div className="bg-card-2 rounded-2xl border border-text-secondary/10 p-6">
       {/* chart header */}
@@ -38,7 +39,10 @@ export default function AttendanceChart() {
           {/* dot */}
           <div className="bg-primary rounded-full h-4 w-4" />
           {/* text */}
-          <p className="text-primary text-lg">This Week Avg: 95.1%</p>
+          <p className="text-primary text-lg">
+            {" "}
+            {isLoading ? "Loading..." : `This Week Avg: ${weeklyAverage}%`}
+          </p>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { supabase, supabaseAdmin } from "../config/supabaseClient.js";
-
+import { creatActivity } from "../services/acitivityService.js";
 //GEO CHECK.
 //check if teacher is within the radius.
 //havasine formula function to calculate radial difference.
@@ -157,6 +157,21 @@ export const clockIn = async (req, res) => {
         attendError,
       });
     }
+
+    //track the activity.
+    await creatActivity({
+      actorProfileId: req.user.id,
+
+      eventType: "Teacher_clocked_in",
+
+      title: `Teacher ${teacher.profiles.first_name} ${teacher.profiles.last_name} clocked in`,
+
+      description: `Logged by ${teacher.profiles.first_name} ${teacher.profiles.last_name}`,
+
+      metadata: {
+        teacher_id: teacher.id,
+      },
+    });
 
     return res.status(200).json({
       message: isLate

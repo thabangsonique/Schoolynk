@@ -1,34 +1,19 @@
-import { ArrowRight, Clock } from "lucide-react";
-import React from "react";
-
-//mock data
-const OverviewItems = [
-  {
-    class: "4A",
-    title: "Grade 4A",
-    description: "Teacher: Sara johnson - 30 learners",
-  },
-  {
-    class: "4B",
-    title: "Grade 4B",
-    description: "Logged by Sarah Johnson",
-  },
-  {
-    class: "5A",
-    title: "Grade 5A",
-    description: "Logged by Sarah Johnson",
-  },
-  {
-    class: "4C",
-    title: "Grade 4C",
-    description: "Logged by Sarah Johnson",
-  },
-];
+import { ChevronRight, Loader2 } from "lucide-react";
+import { useGetClassroomOverviewQuery } from "../../features/api";
 
 export default function ClassOverview() {
+  const {
+    data: overview,
+    isError,
+    isLoading,
+  } = useGetClassroomOverviewQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  const classrooms = overview?.classes ?? [];
+
   return (
     <div className="bg-card-2 border border-text-secondary/10 rounded-2xl p-6">
-      {/* header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl text-white font-bold tracking-wide">
@@ -40,33 +25,58 @@ export default function ClassOverview() {
         </div>
 
         <button className="text-primary tracking-wide hover:scale-103 transition-all duration-300 hover:cursor-pointer">
-          View All 18 Classes
+          View All {overview?.total_classes ?? 0} Classes →
         </button>
       </div>
 
-      {/* activity logs- map function*/}
-      <div className="mt-5 space-y-5">
-        {OverviewItems.map((item, idx) => {
-          return (
+      <div className="mt-5 space-y-3">
+        {isLoading && (
+          <div className="flex justify-center py-8">
+            <Loader2 className="animate-spin text-primary" />
+          </div>
+        )}
+
+        {isError && (
+          <p className="py-8 text-center text-red-400">
+            Could not load classroom overview.
+          </p>
+        )}
+
+        {!isLoading && !isError && classrooms.length === 0 && (
+          <p className="py-8 text-center text-text-secondary/60">
+            No classes have been created yet.
+          </p>
+        )}
+
+        {!isLoading &&
+          !isError &&
+          classrooms.slice(0, 4).map((classroom) => (
             <div
-              key={idx}
+              key={classroom.id}
               className="bg-background border border-text-secondary/10 rounded-2xl flex items-center py-3 px-4"
             >
               <div className="bg-card-2 border border-text-secondary/10 rounded-2xl p-4">
-                <h1 className="text-white text-lg font-bold">{item.class}</h1>
+                <h2 className="text-white text-lg font-bold">
+                  {classroom.name}
+                </h2>
               </div>
 
-              {/* text */}
               <div className="ml-3">
-                <h1 className="text-white text-lg">{item.title}</h1>
-                <p className="text-text-secondary/80">{item.description}</p>
+                <h2 className="text-white text-lg font-medium">
+                  Grade {classroom.name}
+                </h2>
+                <p className="text-text-secondary/80">
+                  Teacher: {classroom.teacher_name ?? "Unassigned"} ·{" "}
+                  {classroom.learner_count} learners
+                </p>
               </div>
 
-              {/* time recieved */}
-              <p className="text-text-secondary/40 ml-auto">5:03 PM</p>
+              <span className="bg-primary/10 text-primary rounded-lg py-1 px-3 ml-auto font-semibold">
+                {classroom.attendance_percentage}%
+              </span>
+              <ChevronRight className="ml-3 text-text-secondary/60" />
             </div>
-          );
-        })}
+          ))}
       </div>
     </div>
   );

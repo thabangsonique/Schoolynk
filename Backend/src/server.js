@@ -8,6 +8,7 @@ import classRoutes from "../src/routes/classRoutes.js";
 import subjectsRoutes from "../src/routes/subjectsRoutes.js";
 import learnerAttendanceRoutes from "../src/routes/learnerAttendanceRoutes.js";
 import adminAttendanceRoutes from "../src/routes/adminAttendanceRoutes.js";
+import activityRoutes from "./routes/activityRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -24,7 +25,9 @@ app.use("/api", classRoutes);
 app.use("/api", subjectsRoutes);
 app.use("/api", learnerAttendanceRoutes);
 app.use("/api", adminAttendanceRoutes);
-const port = process.env.PORT;
+app.use("/api", activityRoutes);
+
+const port = process.env.PORT || 3001;
 
 //check api health.
 app.get("api/health", (req, res) => {

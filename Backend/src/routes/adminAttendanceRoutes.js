@@ -5,6 +5,7 @@ import { requireRole } from "../middlewares/authMiddleware/requireRole.js";
 import {
   learnerAttendance,
   staffOverview,
+  weeklyLearnerAttendance,
 } from "../controllers/adminAttendanceController.js";
 
 const router = Router();
@@ -12,5 +13,10 @@ const router = Router();
 //ADMIN
 router.get("/staff-overview", authenticatedUser, staffOverview);
 router.get("/learners-overview", authenticatedUser, learnerAttendance);
-
+router.get(
+  "/weekly-learner-attendance",
+  authenticatedUser,
+  requireRole("admin"),
+  weeklyLearnerAttendance,
+);
 export default router;

@@ -53,7 +53,7 @@ router.get("/my-classes", authenticatedUser, getMyClasses);
 router.post("/clock-in", authenticatedUser, clockIn);
 router.post("/clock-out", authenticatedUser, clockOut);
 router.get("/my-attendance", authenticatedUser, viewMyAttendance);
-router.get("/avatar", authenticatedUser, insertAvater);
+router.post("/avatar", authenticatedUser, insertAvater);
 
 //
 export default router;

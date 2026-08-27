@@ -5,6 +5,7 @@ const initialState = {
   isCreateSubjectOpen: false,
   isCreateLearnerOpen: false,
   isCreateTeacherOpen: false,
+  viewLearnerOpen: false,
 };
 
 export const globalSlice = createSlice({
@@ -23,6 +24,9 @@ export const globalSlice = createSlice({
     },
     setCreateLearner: (state, action) => {
       state.isCreateLearnerOpen = action.payload;
+    },
+    setViewLearner: (state, action) => {
+      state.viewLearnerOpen = action.payload;
     },
   },
 });

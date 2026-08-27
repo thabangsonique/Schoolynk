@@ -1,27 +1,16 @@
 import { Clock } from "lucide-react";
 import React from "react";
-
+import { useGetRecentActivitiesQuery } from "../../features/api";
 //mock data
-const recentActivities = [
-  {
-    title: "Teacher Sarah Johnson clocked in",
-    description: "Logged by Sarah Johnson",
-  },
-  {
-    title: "Teacher Sarah Johnson clocked in",
-    description: "Logged by Sarah Johnson",
-  },
-  {
-    title: "Teacher Sarah Johnson clocked in",
-    description: "Logged by Sarah Johnson",
-  },
-  {
-    title: "Teacher Sarah Johnson clocked in",
-    description: "Logged by Sarah Johnson",
-  },
-];
 
 export default function RecentActivity() {
+  const {
+    data: recentActivities = [],
+    isError,
+    isLoading,
+  } = useGetRecentActivitiesQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
   return (
     <div className="bg-card-2 border border-text-secondary/10 rounded-2xl p-6">
       {/* header */}
@@ -34,7 +23,7 @@ export default function RecentActivity() {
 
       {/* activity logs- map function*/}
       <div className="mt-5 space-y-5">
-        {recentActivities.map((activity, idx) => {
+        {recentActivities?.map((activity, idx) => {
           return (
             <div
               key={idx}

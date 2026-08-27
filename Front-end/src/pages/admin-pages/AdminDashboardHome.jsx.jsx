@@ -2,11 +2,27 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { useAuth } from "../../context/authContext";
 import Button from "../../components/global/Button";
-import { ChevronRight, Layers, Plus, UserPlus } from "lucide-react";
+import {
+  CalendarCheck,
+  ChevronRight,
+  GraduationCap,
+  Layers,
+  Loader,
+  Loader2,
+  Plus,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import AdminStatsCard from "../../components/cards/AdminStatsCard";
 import AttendanceChart from "../../components/charts/AttendanceChart";
 import RecentActivity from "../../components/admin-components/RecentActivity";
 import ClassOverview from "../../components/admin-components/ClassOverview";
+import {
+  useGetAllClassesQuery,
+  useGetLearnerAttendanceOverviewQuery,
+  useGetLearnersQuery,
+  useGetTeachersQuery,
+} from "../../features/api";
 
 export default function AdminDashboardHome() {
   const [selected, setSelected] = useState("Add Teacher");
@@ -14,6 +30,51 @@ export default function AdminDashboardHome() {
   const isSidebarCollapsed = useSelector(
     (state) => state.global.isSidebarCollapsed,
   );
+
+  //fetch all teachers.
+  const {
+    data: teachers,
+    error,
+    isError,
+    isLoading,
+  } = useGetTeachersQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  //fetch all learners.
+  const {
+    data: learners = [],
+    error: errorLearners,
+    isError: isErrorLearners,
+    isLoading: isloadingLearners,
+  } = useGetLearnersQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  //fetch all classes.
+  const {
+    data: classes = [],
+    error: errorClasses,
+    isError: isErrorClasses,
+    isLoading: isloadingClasses,
+  } = useGetAllClassesQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  //fetch all learner attendance.
+  const {
+    data: attendanceOverview,
+    isError: attendError,
+    isLoading: attendLoading,
+  } = useGetLearnerAttendanceOverviewQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  const learnerSummary = attendanceOverview?.summary;
+
+  const attendancePercentage = attendanceOverview?.attendance_percentage;
+
+  console.log("here is the attendance data", attendanceOverview);
   return (
     <div className={`${isSidebarCollapsed ? "pl-30 pr-10" : "px-10"} py-10`}>
       {/* header section */}
@@ -68,10 +129,109 @@ export default function AdminDashboardHome() {
 
       {/* CONTENT DASHBOARD */}
       <div className="mt-7 gap-5 grid md:grid-cols-4">
-        <AdminStatsCard />
-        <AdminStatsCard />
-        <AdminStatsCard />
-        <AdminStatsCard />
+        {/* teachers */}
+        <AdminStatsCard
+          value={
+            isLoading ? (
+              <Loader2 className="animate-spin" />
+            ) : isError ? (
+              <P className="text-primary text-lg">Failed to load teachers.</P>
+            ) : (
+              (teachers?.length ?? 0)
+            )
+          }
+          title="Total Teachers"
+          description={
+            isLoading ? (
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce"></span>
+              </div>
+            ) : (
+              `${teachers?.length} active staff members`
+            )
+          }
+          Icon={<Users className="text-primary" />}
+        />
+
+        {/* learners */}
+        <AdminStatsCard
+          value={
+            isloadingLearners ? (
+              <Loader2 className="animate-spin" />
+            ) : isError ? (
+              <P className="text-primary text-lg">Failed to load learners.</P>
+            ) : (
+              (learners.learners?.length ?? 0)
+            )
+          }
+          title="Total Learners"
+          description={
+            isloadingLearners ? (
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce"></span>
+              </div>
+            ) : (
+              `${learners.learners?.length} enrolled students`
+            )
+          }
+          Icon={<GraduationCap className="text-primary" />}
+        />
+
+        {/* classes */}
+        <AdminStatsCard
+          value={
+            isloadingLearners ? (
+              <Loader2 className="animate-spin" />
+            ) : isError ? (
+              <P className="text-primary text-lg">Failed to load classes.</P>
+            ) : (
+              (classes.classes?.length ?? 0)
+            )
+          }
+          title="Total Classes"
+          description={
+            isloadingClasses ? (
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce"></span>
+              </div>
+            ) : (
+              `${classes.classes?.length} classrooms active`
+            )
+          }
+          Icon={<Layers className="text-primary" />}
+        />
+
+        {/* attendance */}
+        <AdminStatsCard
+          value={
+            attendLoading ? (
+              <Loader2 className="animate-spin" />
+            ) : isError ? (
+              <P className="text-primary text-lg">Failed to load attendance.</P>
+            ) : (
+              (`${attendanceOverview?.summary?.attendance_percentage}` ?? 0)
+            )
+          }
+          title="Today's Attendance"
+          description={
+            attendLoading ? (
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce"></span>
+              </div>
+            ) : (
+              `${attendanceOverview?.summary?.attendance_percentage}% Schoolwide overall`
+            )
+          }
+          Icon={<CalendarCheck className="text-primary" />}
+        />
       </div>
 
       {/* CHART STATS */}
@@ -108,6 +268,14 @@ export default function AdminDashboardHome() {
                 <h2 className="text-red-500 text-2xl font-bold mt-5">1</h2>
               </div>
             </div>
+
+            {/*small line */}
+            <div className="w-full h-0.25 bg-text-secondary/10 mt-4" />
+
+            <div className="flex justify-between mt-5">
+              <span>Expected Staff: ${}</span>
+              <span> </span>
+            </div>
           </div>
 
           {/* second card */}
@@ -117,13 +285,25 @@ export default function AdminDashboardHome() {
               <h1 className="text-xl font-bold text-white ">
                 Today's Learner Attendance
               </h1>
-              <span className="text-primary text-lg font-bold">94.6%</span>
+              <span className="text-primary text-lg font-bold">
+                {" "}
+                {attendLoading ? (
+                  <Loader2 className="animate-spin" />
+                ) : attendError ? (
+                  "—"
+                ) : (
+                  `${attendancePercentage}%`
+                )}
+              </span>
             </div>
 
             {/* progress bar */}
             <div className="h-4 w-full rounded-full mt-4 overflow-hidden bg-red-500/60">
               {/* filler bar */}
-              <div className="h-full  bg-text-green" style={{ width: 100 }} />
+              <div
+                className="h-full  bg-text-green"
+                style={{ width: `${attendancePercentage}` }}
+              />
             </div>
 
             {/* target values */}
@@ -141,14 +321,24 @@ export default function AdminDashboardHome() {
                 <div className=" bg-text-green h-3 w-3 rounded-full" />
                 <p className="text-text-secondary">
                   Present:
-                  <span className="ml-2 text-white font-bold text-lg">456</span>
+                  <span className="ml-2 text-white font-bold text-lg">
+                    {" "}
+                    {attendLoading
+                      ? "..."
+                      : (learnerSummary?.present_today ?? 0)}
+                  </span>
                 </p>
               </div>
               <div className="mt-4 flex items-center gap-3">
                 <div className=" bg-red-500 h-3 w-3 rounded-full" />
                 <p className="text-text-secondary">
                   Absent:
-                  <span className="ml-2 text-white font-bold text-lg">456</span>
+                  <span className="ml-2 text-white font-bold text-lg">
+                    {" "}
+                    {attendLoading
+                      ? "..."
+                      : (learnerSummary?.absent_today ?? 0)}
+                  </span>
                 </p>
               </div>
             </div>
