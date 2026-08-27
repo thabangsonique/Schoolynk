@@ -10,7 +10,7 @@ import TeacherDashboard from "./pages/TeacherDashboard";
 import { Loader } from "lucide-react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import { useAuth } from "./context/authContext.jsx";
-import AdminDashboardHome from "./pages/admin-pages/AdminDashboardHome.jsx.jsx";
+import AdminDashboardHome from "./pages/admin-pages/AdminDashboardHome.jsx";
 import Teachers from "./pages/admin-pages/Teachers.jsx";
 import Learners from "./pages/admin-pages/Learners.jsx";
 import Classes from "./pages/admin-pages/Classes.jsx";

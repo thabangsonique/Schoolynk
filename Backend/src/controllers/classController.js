@@ -57,7 +57,10 @@ export const getAllClasses = async (req, res) => {
     const { data: classes, error: fetchError } = await supabaseAdmin
       .from("classes")
       .select(
-        `id, name, grade,created_at,teachers(id, employee_number, profiles(id, first_name, last_name,status,role))
+        `id, name, grade,created_at,
+        teachers(id, employee_number, profiles(id, first_name, last_name,status,role)),
+        learners(id, first_name, last_name, student_number),
+        class_subjects(id, subjects(id, name, code))
       `,
       );
 

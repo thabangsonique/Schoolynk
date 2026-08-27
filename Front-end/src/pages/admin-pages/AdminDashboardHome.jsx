@@ -21,6 +21,7 @@ import {
   useGetAllClassesQuery,
   useGetLearnerAttendanceOverviewQuery,
   useGetLearnersQuery,
+  useGetStaffOverviewQuery,
   useGetTeachersQuery,
 } from "../../features/api";
 
@@ -69,12 +70,34 @@ export default function AdminDashboardHome() {
   } = useGetLearnerAttendanceOverviewQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
+  const {
+    data: staffOverview,
+    isError: staffError,
+    isLoading: staffLoading,
+  } = useGetStaffOverviewQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  const staffAttendancePercentage = staffOverview?.summary?.total_expected
+    ? Number(
+        (
+          (staffOverview.summary.currently_present /
+            staffOverview.summary.total_expected) *
+          100
+        ).toFixed(1),
+      )
+    : 0;
+
+  const presentTeachers = staffOverview?.summary?.currently_present ?? 0;
+  const totalTeachers = staffOverview?.summary?.total_expected ?? 0;
+  const notClockedIn = staffOverview?.summary?.pending_clock_in ?? 0;
 
   const learnerSummary = attendanceOverview?.summary;
 
-  const attendancePercentage = attendanceOverview?.attendance_percentage;
+  const attendancePercentage =
+    attendanceOverview?.summary?.attendance_percentage;
 
-  console.log("here is the attendance data", attendanceOverview);
+  console.log("here is THE FETCHGED DATA", staffOverview);
   return (
     <div className={`${isSidebarCollapsed ? "pl-30 pr-10" : "px-10"} py-10`}>
       {/* header section */}
@@ -256,16 +279,22 @@ export default function AdminDashboardHome() {
             <div className="grid grid-cols-3 mt-4 gap-4">
               <div className="bg-text-green/5 border border-text-green/10 rounded-2xl p-5">
                 <p className="text-text-green">Present</p>
-                <h2 className="text-2xl font-bold text-text-green mt-5">21</h2>
+                <h2 className="text-2xl font-bold text-text-green mt-5">
+                  {presentTeachers}
+                </h2>
               </div>
               {/* second-card */}
               <div className="bg-primary/5 border border-primary/10 rounded-2xl p-5">
                 <p className="text-primary">Not Clocked</p>
-                <h2 className="text-primary text-2xl font-bold mt-auto">21</h2>
+                <h2 className="text-primary text-2xl font-bold mt-auto">
+                  {notClockedIn}
+                </h2>
               </div>
               <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-5">
                 <p className="text-red-500">Absent</p>
-                <h2 className="text-red-500 text-2xl font-bold mt-5">1</h2>
+                <h2 className="text-red-500 text-2xl font-bold mt-5">
+                  {staffOverview?.summary?.marked_absent ?? 0}
+                </h2>
               </div>
             </div>
 
@@ -273,8 +302,12 @@ export default function AdminDashboardHome() {
             <div className="w-full h-0.25 bg-text-secondary/10 mt-4" />
 
             <div className="flex justify-between mt-5">
-              <span>Expected Staff: ${}</span>
-              <span> </span>
+              <span className="text-text-secondary">
+                Expected Staff: {teachers?.length}
+              </span>
+              <span className="text-text-green">
+                {staffAttendancePercentage}% currently on premises
+              </span>
             </div>
           </div>
 

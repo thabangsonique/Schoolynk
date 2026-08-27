@@ -120,7 +120,7 @@ export const getTeachers = async (req, res) => {
     const { data: teachers, error } = await supabaseAdmin
       .from("teachers")
       .select(
-        `id, employee_number, profiles(id,first_name, last_name, status, role), classes(id, name, grade)`,
+        `id, employee_number, profiles!inner(id,first_name, last_name, status, role), classes(id, name, grade)`,
       )
       .eq("profiles.status", "active");
 

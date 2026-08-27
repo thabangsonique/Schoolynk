@@ -58,6 +58,26 @@ export const api = createApi({
         body: teacherData,
       }),
       invalidatesTags: ["Teachers"],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const createdTeacher = data?.newTeacher;
+
+          if (createdTeacher) {
+            dispatch(
+              api.util.updateQueryData("getTeachers", undefined, (teachers) => {
+                if (
+                  !teachers.some((teacher) => teacher.id === createdTeacher.id)
+                ) {
+                  teachers.unshift(createdTeacher);
+                }
+              }),
+            );
+          }
+        } catch {
+          // The mutation component displays the request error.
+        }
+      },
     }),
 
     // Update teacher by ID
@@ -141,6 +161,37 @@ export const api = createApi({
       query: () => "/api/learners",
       providesTags: ["Learners"],
     }),
+    createLearner: build.mutation({
+      query: (learnerData) => ({
+        url: "/api/learners",
+        method: "POST",
+        body: learnerData,
+      }),
+      invalidatesTags: ["Learners", "Classes", "Dashboard"],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          const createdLearner = data?.newLearner;
+
+          if (createdLearner) {
+            dispatch(
+              api.util.updateQueryData("getLearners", undefined, (response) => {
+                if (
+                  response?.learners &&
+                  !response.learners.some(
+                    (learner) => learner.id === createdLearner.id,
+                  )
+                ) {
+                  response.learners.unshift(createdLearner);
+                }
+              }),
+            );
+          }
+        } catch {
+          // The mutation component displays the request error.
+        }
+      },
+    }),
     // =========================
     // CLASSES
     // =========================
@@ -148,6 +199,14 @@ export const api = createApi({
     getAllClasses: build.query({
       query: () => "/api/classes",
       providesTags: ["Classes"],
+    }),
+    createClass: build.mutation({
+      query: (classData) => ({
+        url: "/api/classes",
+        method: "POST",
+        body: classData,
+      }),
+      invalidatesTags: ["Classes", "Dashboard"],
     }),
     getClassroomOverview: build.query({
       query: () => "/api/classes-overview",
@@ -159,7 +218,10 @@ export const api = createApi({
     // SUBJECTS
     // =========================
 
-    // Add subject endpoints here
+    getAllSubjects: build.query({
+      query: () => "/api/subjects",
+      providesTags: ["Subjects"],
+    }),
 
     // =========================
     // ATTENDANCE
@@ -212,8 +274,11 @@ export const {
   useViewMyAttendanceQuery,
   useInsertAvaterMutation,
   useGetLearnersQuery,
+  useCreateLearnerMutation,
   useGetAllClassesQuery,
+  useCreateClassMutation,
   useGetClassroomOverviewQuery,
+  useGetAllSubjectsQuery,
   useGetLearnerAttendanceOverviewQuery,
   useGetStaffOverviewQuery,
   useGetWeeklyLearnerAttendanceQuery,

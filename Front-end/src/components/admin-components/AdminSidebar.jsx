@@ -46,13 +46,12 @@ const menuItems = [
   {
     title: "Attendance",
     icon: CalendarCheck,
-    href: "//admin/dashboard/attendance",
+    href: "/admin/dashboard/attendance",
   },
 ];
 
 export default function AdminSidebar() {
   const dispatch = useDispatch();
-  const [isActive, setIsActive] = useState("");
   const isSidebarCollapsed = useSelector(
     (state) => state.global.isSidebarCollapsed,
   );
@@ -112,14 +111,17 @@ export default function AdminSidebar() {
           return (
             <NavLink
               key={idx}
-              onClick={() => setIsActive(item.title)}
-              className={`flex items-center rounded-xl px-3 py-3 mb-4 transition-all duration-200 ${
-                isSidebarCollapsed ? "justify-center" : "gap-5"
-              } ${
-                isActive === item.title
-                  ? "bg-primary text-black shadow-lg"
-                  : "text-text-secondary hover:bg-text-secondary/10"
-              }`}
+              to={item.href}
+              end={item.href === "/admin/dashboard"}
+              className={({ isActive }) =>
+                `flex items-center rounded-xl px-3 py-3 mb-4 transition-all duration-200 ${
+                  isSidebarCollapsed ? "justify-center" : "gap-5"
+                } ${
+                  isActive
+                    ? "bg-primary text-black shadow-lg"
+                    : "text-text-secondary hover:bg-text-secondary/10"
+                }`
+              }
             >
               <Icon />
               <span
