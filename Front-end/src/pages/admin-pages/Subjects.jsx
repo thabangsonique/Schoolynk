@@ -1,17 +1,49 @@
 import React from "react";
 import { Plus } from "lucide-react";
 import SubjectCard from "../../components/cards/SubjectCard";
-import { useGetAllSubjectsQuery } from "../../features/api";
+import { useSelector, useDispatch } from "react-redux";
+import { setCreateSubject } from "../../features/globalSlice";
+import {
+  useGetAllClassesQuery,
+  useGetAllSubjectsQuery,
+  useGetTeachersQuery,
+  useDeleteSubjectMutation,
+} from "../../features/api";
+import CreateSubject from "../../components/admin-components/CreateSubject";
+import EditSubject from "../../components/admin-components/EditSubject";
 
 export default function Subjects() {
+  const dispatch = useDispatch();
+  const createSubjectOpen = useSelector(
+    (state) => state.global.isCreateSubjectOpen,
+  );
+  const [editingSubject, setEditingSubject] = React.useState(null);
+  const [deleteSubject, { isLoading: isDeleting, error: deleteError }] =
+    useDeleteSubjectMutation();
   const {
     data,
     isLoading,
     isError,
+    refetch: refetchSubjects,
   } = useGetAllSubjectsQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
+  const { data: classesResponse } = useGetAllClassesQuery();
+  const { data: teachers = [] } = useGetTeachersQuery();
   const subjects = data?.result ?? [];
+
+  const handleDeleteSubject = async (subject) => {
+    if (!window.confirm(`Are you sure you want to delete ${subject.name}?`)) {
+      return;
+    }
+
+    try {
+      await deleteSubject(subject.id).unwrap();
+      await refetchSubjects();
+    } catch {
+      // The API error is displayed below the subject cards.
+    }
+  };
 
   return (
     <div className="py-10 px-8">
@@ -27,7 +59,7 @@ export default function Subjects() {
 
         {/* right */}
         <button
-          onClick={() => dispatch(setCreateClass(true))}
+          onClick={() => dispatch(setCreateSubject(true))}
           className="flex items-center gap-3 bg-primary rounded-2xl py-3 px-4 hover:scale-103 hover:shadow-lg hover:cursor-pointer transition-all duration-300"
         >
           <Plus className="text-black" />
@@ -44,9 +76,41 @@ export default function Subjects() {
         {!isLoading &&
           !isError &&
           subjects.map((subject) => (
-            <SubjectCard key={subject.id} subject={subject} />
+            <SubjectCard
+              key={subject.id}
+              subject={subject}
+              onEdit={setEditingSubject}
+              onDelete={handleDeleteSubject}
+              isDeleting={isDeleting}
+            />
           ))}
       </div>
+
+      {deleteError && (
+        <p className="mt-4 text-sm text-red-400">
+          {deleteError?.data?.message ??
+            "Failed to delete subject. Please try again."}
+        </p>
+      )}
+
+      {createSubjectOpen && (
+        <CreateSubject
+          teachers={teachers}
+          classes={classesResponse?.classes ?? []}
+          onCreated={refetchSubjects}
+          onClose={() => dispatch(setCreateSubject(false))}
+        />
+      )}
+
+      {editingSubject && (
+        <EditSubject
+          subject={editingSubject}
+          teachers={teachers}
+          classes={classesResponse?.classes ?? []}
+          onUpdated={refetchSubjects}
+          onClose={() => setEditingSubject(null)}
+        />
+      )}
     </div>
   );
 }

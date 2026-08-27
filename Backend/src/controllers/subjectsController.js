@@ -9,8 +9,10 @@ export const getAllSubjects = async (req, res) => {
           id,
           name,
           description,
+          code,
           class_subjects (
             id,
+            weekly_hours,
             classes (
               id,
               name,
@@ -41,8 +43,11 @@ export const getAllSubjects = async (req, res) => {
       id: subject.id,
       name: subject.name,
       description: subject.description,
+      code: subject.code,
+      weekly_hours: subject.class_subjects?.[0]?.weekly_hours ?? 0,
       classes: (subject.class_subjects ?? []).map((cs) => ({
         assignment_id: cs.id,
+        weekly_hours: cs.weekly_hours,
         ...cs.classes,
         // cs.classes.teachers is whoever teaches THIS subject to THIS class
         subject_teacher: cs.classes?.teachers
@@ -181,39 +186,40 @@ export const updateSubject = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      message: "Subject Updated successfully",
-      updateSubject,
-    });
-
-    //update class subjects table
-    let classSubjectUpdate = {};
-
-    if (lead_teacher_id !== undefined)
-      classSubjectUpdate.lead_teacher_id = lead_teacher_id;
-    if (classroom_ids !== undefined)
-      classSubjectUpdate.classroom_ids = classroom_ids;
-    if (weekly_hours !== undefined)
-      classSubjectUpdate.weekly_hours = weekly_hours;
-
-    const { data: classSubUpdate, error: updateError } = await supabaseAdmin
+    const { error: deleteAssignmentsError } = await supabaseAdmin
       .from("class_subjects")
-      .update(classSubjectUpdate)
-      .eq("id", subjectId)
-      .select()
-      .maybeSingle();
+      .delete()
+      .eq("subject_id", subjectId);
 
-    if (updateError) {
+    if (deleteAssignmentsError) {
       return res.status(400).json({
-        message: "Failed to update class subject info",
-        updateError: error.message,
+        message: "Failed to update classroom assignments",
+        error: deleteAssignmentsError.message,
       });
     }
 
-    return res.status(500).json({
-      message: "subject updated successfully",
+    if (classroom_ids.length > 0) {
+      const assignments = classroom_ids.map((class_id) => ({
+        class_id,
+        subject_id: subjectId,
+        teacher_id: lead_teacher_id || null,
+        weekly_hours,
+      }));
+      const { error: assignmentError } = await supabaseAdmin
+        .from("class_subjects")
+        .insert(assignments);
+
+      if (assignmentError) {
+        return res.status(400).json({
+          message: "Subject updated but classroom assignments failed",
+          error: assignmentError.message,
+        });
+      }
+    }
+
+    return res.status(200).json({
+      message: "Subject updated successfully",
       updateSubject,
-      classSubUpdate,
     });
   } catch (error) {
     return res.status(500).json({
@@ -246,22 +252,16 @@ export const deleteSubject = async (req, res) => {
       return res.status(404).json({ message: "Subject not found." });
     }
 
-    //chack if the subject is assigned to classes.
-    const { count, countError } = await supabaseAdmin
+    // Remove classroom assignments before deleting the subject itself.
+    const { error: assignmentsError } = await supabaseAdmin
       .from("class_subjects")
-      .select("id", { count: "exact", head: true })
+      .delete()
       .eq("subject_id", subjectId);
 
-    if (countError) {
+    if (assignmentsError) {
       return res.status(400).json({
-        message: "Failed to check subject assignments",
-        error: countError.message,
-      });
-    }
-
-    if (count > 0) {
-      return res.status(409).json({
-        message: `Connot delete subject ${subject.name}: it is assigned to ${count} class(es).Remove those assignments first`,
+        message: "Failed to remove subject classroom assignments",
+        error: assignmentsError.message,
       });
     }
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { BookOpen, Clock, Pencil, Trash2 } from "lucide-react";
 
-export default function SubjectCard({ subject }) {
+export default function SubjectCard({ subject, onEdit, onDelete, isDeleting }) {
   const classes = subject?.classes ?? [];
   const leadTeacher = classes.find(
     (classroom) => classroom.subject_teacher,
@@ -32,6 +32,7 @@ export default function SubjectCard({ subject }) {
           <button
             type="button"
             title="Edit subject"
+            onClick={() => onEdit(subject)}
             className="hover:text-primary"
           >
             <Pencil size={17} />
@@ -39,6 +40,8 @@ export default function SubjectCard({ subject }) {
           <button
             type="button"
             title="Delete subject"
+            onClick={() => onDelete(subject)}
+            disabled={isDeleting}
             className="hover:text-red-400"
           >
             <Trash2 size={17} />

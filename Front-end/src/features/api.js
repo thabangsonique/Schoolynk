@@ -222,6 +222,29 @@ export const api = createApi({
       query: () => "/api/subjects",
       providesTags: ["Subjects"],
     }),
+    createSubject: build.mutation({
+      query: (subjectData) => ({
+        url: "/api/subjects",
+        method: "POST",
+        body: subjectData,
+      }),
+      invalidatesTags: ["Subjects", "Classes", "Dashboard"],
+    }),
+    updateSubject: build.mutation({
+      query: ({ id, subjectData }) => ({
+        url: `/api/subjects/${id}`,
+        method: "PATCH",
+        body: subjectData,
+      }),
+      invalidatesTags: ["Subjects", "Classes", "Dashboard"],
+    }),
+    deleteSubject: build.mutation({
+      query: (id) => ({
+        url: `/api/subjects/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Subjects", "Classes", "Dashboard"],
+    }),
 
     // =========================
     // ATTENDANCE
@@ -229,12 +252,18 @@ export const api = createApi({
 
     //get attandence school learners.
     getLearnerAttendanceOverview: build.query({
-      query: () => "/api/learners-overview",
+      query: (date) => ({
+        url: "/api/learners-overview",
+        params: date ? { id: date } : undefined,
+      }),
       providesTags: ["LearnerAttendance", "Dashboard"],
     }),
 
     getStaffOverview: build.query({
-      query: () => "/api/staff-overview",
+      query: (date) => ({
+        url: "/api/staff-overview",
+        params: date ? { id: date } : undefined,
+      }),
       providesTags: ["StaffAttendance", "Dashboard"],
     }),
 
@@ -279,6 +308,9 @@ export const {
   useCreateClassMutation,
   useGetClassroomOverviewQuery,
   useGetAllSubjectsQuery,
+  useCreateSubjectMutation,
+  useUpdateSubjectMutation,
+  useDeleteSubjectMutation,
   useGetLearnerAttendanceOverviewQuery,
   useGetStaffOverviewQuery,
   useGetWeeklyLearnerAttendanceQuery,
