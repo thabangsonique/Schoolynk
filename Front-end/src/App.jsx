@@ -16,6 +16,11 @@ import Learners from "./pages/admin-pages/Learners.jsx";
 import Classes from "./pages/admin-pages/Classes.jsx";
 import Subjects from "./pages/admin-pages/Subjects.jsx";
 import Attendance from "./pages/admin-pages/Attendance.jsx";
+import TeacherDashboardHome from "./pages/teacher-pages/TeacherDashboardHome.jsx";
+import MyClass from "./pages/teacher-pages/MyClass.jsx";
+import MyLearners from "./pages/teacher-pages/MyLearners.jsx";
+import TakeAttendance from "./pages/teacher-pages/TakeAttendance.jsx";
+import MyAttendance from "./pages/teacher-pages/MyAttendance.jsx";
 
 //loading ui.
 const LoadingPage = () => {
@@ -99,7 +104,14 @@ function App() {
             <TeacherDashboard />
           </ProtectedRoutes>
         }
-      />
+      >
+        {/* all the child routes for teacher dashboard */}
+        <Route index element={<TeacherDashboardHome />} />
+        <Route path="my-class" element={<MyClass />} />
+        <Route path="my-learners" element={<MyLearners />} />
+        <Route path="take-attendance" element={<TakeAttendance />} />
+        <Route path="my-attendance" element={<MyAttendance />} />
+      </Route>
       {/* redirect user from unknown route to the home page */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

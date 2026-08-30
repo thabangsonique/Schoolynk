@@ -11,6 +11,11 @@ const pageTitles = {
   "/admin/dashboard/classes": "Classes",
   "/admin/dashboard/subjects": "Subjects",
   "/admin/dashboard/attendance": "Attendance",
+  "/teacher/dashboard": "Teacher Dashboard",
+  "/teacher/dashboard/my-class": "My Class",
+  "/teacher/dashboard/my-learners": "My Learners",
+  "/teacher/dashboard/take-attendance": "Take Attendance",
+  "/teacher/dashboard/my-attendance": "My Attendance",
 };
 
 export default function Navbar() {

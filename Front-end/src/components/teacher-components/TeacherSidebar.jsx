@@ -2,17 +2,15 @@ import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   School,
-  Users,
   LayoutDashboard,
   GraduationCap,
   Layers,
-  BookOpen,
+  ClipboardCheck,
   CalendarCheck,
   Settings,
   LogOut,
   ChevronRight,
   ChevronLeft,
-  ChevronsLeft,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { setSidebarCollapsed } from "../../features/globalSlice";
@@ -20,38 +18,33 @@ import { useAuth } from "../../context/authContext";
 
 const menuItems = [
   {
-    title: "Dashboard",
+    title: "Teacher Dashboard",
     icon: LayoutDashboard,
-    href: "/admin/dashboard",
+    href: "/teacher/dashboard",
   },
   {
-    title: "Teachers",
-    icon: Users,
-    href: "/admin/dashboard/teachers",
-  },
-  {
-    title: "Learners",
-    icon: GraduationCap,
-    href: "/admin/dashboard/learners",
-  },
-  {
-    title: "Classes",
+    title: "My Class",
     icon: Layers,
-    href: "/admin/dashboard/classes",
+    href: "/teacher/dashboard/my-class",
   },
   {
-    title: "Subjects",
-    icon: BookOpen,
-    href: "/admin/dashboard/subjects",
+    title: "My Learners",
+    icon: GraduationCap,
+    href: "/teacher/dashboard/my-learners",
   },
   {
-    title: "Attendance",
+    title: "Take Attendance",
+    icon: ClipboardCheck,
+    href: "/teacher/dashboard/take-attendance",
+  },
+  {
+    title: "My Attendance",
     icon: CalendarCheck,
-    href: "/admin/dashboard/attendance",
+    href: "/teacher/dashboard/my-attendance",
   },
 ];
 
-export default function AdminSidebar() {
+export default function TeacherSidebar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { signOut } = useAuth();
@@ -109,11 +102,6 @@ export default function AdminSidebar() {
 
       {/* MAIN ITEMS SECTION */}
       <div className="mt-10 px-4">
-        {/* <p
-          className={`uppercase text-text-secondary/50 font-bold mb-3 pl-4 ${isSidebarCollapsed ? "hidden" : "block"}`}
-        >
-          School management
-        </p> */}
         {menuItems.map((item, idx) => {
           const Icon = item.icon;
 
@@ -121,7 +109,7 @@ export default function AdminSidebar() {
             <NavLink
               key={idx}
               to={item.href}
-              end={item.href === "/admin/dashboard"}
+              end={item.href === "/teacher/dashboard"}
               className={({ isActive }) =>
                 `flex items-center rounded-xl px-3 py-3 mb-4 transition-all duration-200 ${
                   isSidebarCollapsed ? "justify-center" : "gap-5"

@@ -115,6 +115,12 @@ export const api = createApi({
       providesTags: ["Teachers"],
     }),
 
+    // Get today's attendance for teacher's class
+    getTodayAttendance: build.query({
+      query: () => "/api/learner-attendance",
+      providesTags: ["LearnerAttendance"],
+    }),
+
     // Clock in
     clockIn: build.mutation({
       query: (teacherClockIn) => ({
@@ -297,6 +303,7 @@ export const {
 
   useGetMyLearnersQuery,
   useGetMyClassesQuery,
+  useGetTodayAttendanceQuery,
 
   useClockInMutation,
   useClockOutMutation,

@@ -51,9 +51,15 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe(); //only when app closes.
   }, []);
 
+  //function to sign the user out of supabase.
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, profile, loading, role: profile?.role }}
+      value={{ user, profile, loading, role: profile?.role, signOut }}
     >
       {children}
     </AuthContext.Provider>
