@@ -7,15 +7,14 @@ import {
   CalendarCheck,
   Clock,
   LogIn,
+  LogOut,
   Loader2,
 } from "lucide-react";
 import AdminStatsCard from "../../components/cards/AdminStatsCard";
-import Login from "../Login";
 import { useGetMyClassesQuery } from "../../features/api";
-import { useClockInMutation } from "../../features/api";
+import { useClockInMutation, useClockOutMutation } from "../../features/api";
 import { useGetTodayAttendanceQuery } from "../../features/api";
 import { useViewMyAttendanceQuery } from "../../features/api";
-import { isAction } from "@reduxjs/toolkit";
 
 export default function TeacherDashboardHome() {
   const { user, profile } = useAuth();
@@ -23,25 +22,36 @@ export default function TeacherDashboardHome() {
     (state) => state.global.isSidebarCollapsed,
   );
   const firstName = profile?.first_name ?? "Teacher";
-  const [isClocked, setIsClockedIn] = useState(false);
   const [clockMessage, setClockMessage] = useState(null); // {text, type}
+  //local state flips the UI instantly after a successful clock in/out,
+  //without waiting for the history query to refetch.
+  const [localClock, setLocalClock] = useState("none"); // "none" | "in" | "out"
 
   const today = new Date().toDateString();
 
   //queries
   const { data, isLoading, isError, error } = useGetMyClassesQuery();
   const [clockIn, { isLoading: isClocking }] = useClockInMutation();
-  const [clockOut, { isLoading: isClockingOut }] = useClockInMutation();
+  const [clockOut, { isLoading: isClockingOut }] = useClockOutMutation();
 
-  //check the backend for whether the teacher already clocked in TODAY.
-  const { data: historyData } = useViewMyAttendanceQuery();
+  //teacher's staff attendance history - tells us today's real state.
+  const { data: historyData, refetch: refetchHistory } =
+    useViewMyAttendanceQuery();
+
   const todayISO = new Date().toISOString().split("T")[0];
-  const todayHasClockedIn = (historyData?.records ?? []).some(
-    (record) => record.date === todayISO && record.clock_in,
+  const todayRecord = (historyData?.records ?? []).find(
+    (record) => record.date === todayISO,
   );
 
-  //already clocked in = set on this page OR already on the backend.
-  const alreadyClockedIn = isClocked || todayHasClockedIn;
+  //currently on shift = clocked in AND not clocked out yet.
+  const hasClockedIn =
+    Boolean(todayRecord?.clock_in) || localClock === "in";
+  const hasClockedOut =
+    Boolean(todayRecord?.clock_out) || localClock === "out";
+
+  //three UI states: not started → Clock In, on shift → Clock Out, done → finished.
+  const isOnShift = hasClockedIn && !hasClockedOut;
+  const finishedToday = hasClockedOut;
 
   //fetch today's attendance for the teacher's class.
   const { data: attendanceData, isLoading: attendanceLoading } =
@@ -112,8 +122,9 @@ export default function TeacherDashboardHome() {
         try {
           const result = await clockIn({ latitude, longitude }).unwrap();
 
-          //mark as clocked in so the button disables straight away.
-          setIsClockedIn(true);
+          //flip the UI to "on shift" instantly + re-sync from the server.
+          setLocalClock("in");
+          refetchHistory();
           setClockMessage({ text: result.message, type: "success" });
         } catch (error) {
           setClockMessage({
@@ -136,11 +147,20 @@ export default function TeacherDashboardHome() {
     try {
       const clockOutResult = await clockOut().unwrap();
 
-      setIsClockedIn(false);
-      setClockMessage({ text: clockOutResult.message, type: "success" });
+      //flip the UI to "finished" instantly + re-sync from the server.
+      setLocalClock("out");
+      refetchHistory();
+
+      setClockMessage({
+        text: clockOutResult.hours_worked
+          ? `${clockOutResult.message}. Hours worked: ${clockOutResult.hours_worked}h`
+          : clockOutResult.message,
+        type: "success",
+      });
     } catch (error) {
       setClockMessage({
-        text: error?.data?.message ?? error?.message ?? "Failed to clock in.",
+        text:
+          error?.data?.message ?? error?.message ?? "Failed to clock out.",
         type: "error",
       });
     }
@@ -177,7 +197,11 @@ export default function TeacherDashboardHome() {
               </h1>
             </div>
             <h1 className="text-white text-3xl font-bold ">
-              Ready to start your school shift?
+              {finishedToday
+                ? "Shift complete. Great job today!"
+                : isOnShift
+                  ? "Clocked in. Have a great shift!"
+                  : "Ready to start your school shift?"}
             </h1>
             <p className="text-text-secondary mt-4">Today is {today}</p>
 
@@ -196,21 +220,17 @@ export default function TeacherDashboardHome() {
           </div>
         </div>
 
-        {/* right side */}
-        {/* clockin button */}
-        {!alreadyClockedIn && (
+        {/* right side - one button per state: Clock In / Clock Out / Finished */}
+        {!isOnShift && !finishedToday && (
           <button
             onClick={handleClockIn}
-            disabled={isClocking || alreadyClockedIn}
-            className="flex items-center justify-center h-15 w-60 shadow-xl hover:scale-103 transition-all duration-300 hover:cursor-pointer bg-primary gap-3 rounded-2xl"
+            disabled={isClocking}
+            className="flex items-center justify-center h-15 w-60 shadow-xl hover:scale-103 transition-all duration-300 hover:cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed bg-primary gap-3 rounded-2xl"
           >
             {isClocking ? (
               <Loader2 className="animate-spin" />
-            ) : alreadyClockedIn ? (
-              "Clocked in for today."
             ) : (
               <>
-                {" "}
                 <LogIn />
                 Clock In Now
               </>
@@ -218,29 +238,27 @@ export default function TeacherDashboardHome() {
           </button>
         )}
 
-        {alreadyClockedIn && (
+        {isOnShift && (
           <button
             onClick={handleClockOut}
             disabled={isClockingOut}
-            className="flex items-center justify-center h-15 w-60 shadow-xl hover:scale-103 transition-all duration-300 hover:cursor-pointer bg-primary gap-3 rounded-2xl px-3"
+            className="flex items-center justify-center h-15 w-60 shadow-xl hover:scale-103 transition-all duration-300 hover:cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed bg-primary gap-3 rounded-2xl"
           >
-            {isClocking ? (
+            {isClockingOut ? (
               <Loader2 className="animate-spin" />
-            ) : alreadyClockedIn ? (
-              <p className="text-black/50">
-                Clocked in for today. <br />
-                <span className="font-bold text-lg ml-2 text-black">
-                  Clock Out.
-                </span>{" "}
-              </p>
             ) : (
               <>
-                {" "}
-                <LogIn />
-                Clock In Now
+                <LogOut />
+                Clock Out Now
               </>
             )}
           </button>
+        )}
+
+        {finishedToday && (
+          <div className="flex items-center justify-center h-15 w-60 rounded-2xl bg-primary/10 border border-primary/40 text-primary font-bold px-3 text-center">
+            Clocked out for today
+          </div>
         )}
       </div>
 
