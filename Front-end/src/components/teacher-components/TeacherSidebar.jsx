@@ -65,7 +65,9 @@ export default function TeacherSidebar() {
     (state) => state.global.mobileSidebarOpen,
   );
 
-  const widthClass = isSidebarCollapsed ? "lg:w-[100px] w-[300px]" : "w-[300px]";
+  const widthClass = isSidebarCollapsed
+    ? "lg:w-[100px] w-[300px]"
+    : "w-[300px]";
 
   const sidebarClasses = `bg-card-2 hide-scrollbar z-60 flex flex-col overflow-y-auto h-full py-5 border-r border-text-secondary/10 transition-all duration-300 ${widthClass} fixed top-0 left-0 -translate-x-full lg:translate-x-0 ${mobileSidebarOpen ? "translate-x-0" : ""}`;
 
@@ -80,111 +82,112 @@ export default function TeacherSidebar() {
       )}
 
       <div className={sidebarClasses}>
-      {/* //header section. */}
-      <div
-        className={`w-full flex items-center gap-3 px-8 pb-5 border-b border-text-secondary/10 justify-between ${
-          isSidebarCollapsed ? "lg:justify-center" : "justify-between"
-        }`}
-      >
-        {/* icon */}
+        {/* //header section. */}
         <div
-          className={`flex items-center justify-center h-15 w-15 rounded-xl bg-primary ${
-            isSidebarCollapsed ? "lg:bg-transparent lg:text-primary" : "bg-primary"
+          className={`w-full flex items-center gap-3 px-8 pb-5 border-b border-text-secondary/10 justify-between ${
+            isSidebarCollapsed ? "lg:justify-center" : "justify-between"
           }`}
         >
-          <School size={40} />
-        </div>
-        {/* text */}
-        <div
-          className={`block ${isSidebarCollapsed ? "lg:hidden" : ""}`}
-        >
-          <h1 className="text-white text-2xl font-bold">SchooLynk</h1>
-          <p className="text-text-secondary/50 uppercase tracking-wide">
-            Primary Schools
-          </p>
-        </div>
-
-        {/* desktop collapse toggle */}
-        <div className="hidden lg:block">
-          {isSidebarCollapsed ? (
-            <button
-              onClick={() =>
-                dispatch(setSidebarCollapsed(!isSidebarCollapsed))
-              }
-              className="rounded-lg hover:cursor-pointer py-2 transition-[width] duration-300 hover:bg-text-secondary/10"
-            >
-              <ChevronRight size={30} className=" text-text-secondary/40 " />
-            </button>
-          ) : (
-            <button
-              onClick={() =>
-                dispatch(setSidebarCollapsed(!isSidebarCollapsed))
-              }
-              className=" rounded-lg hover:cursor-pointer py-2 transition-all duration-300 hover:bg-text-secondary/10"
-            >
-              {" "}
-              <ChevronLeft size={30} className=" text-text-secondary/40 " />
-            </button>
-          )}
-        </div>
-
-        {/* mobile close button */}
-        <button
-          onClick={() => dispatch(setMobileSidebarOpen(false))}
-          className="rounded-lg hover:cursor-pointer py-2 lg:hidden hover:bg-text-secondary/10"
-        >
-          <X size={26} className="text-text-secondary/60" />
-        </button>
-      </div>
-
-      {/* MAIN ITEMS SECTION */}
-      <div className="mt-10 px-4">
-        {menuItems.map((item, idx) => {
-          const Icon = item.icon;
-
-          return (
-            <NavLink
-              key={idx}
-              to={item.href}
-              end={item.href === "/teacher/dashboard"}
-              className={({ isActive }) =>
-                `flex items-center rounded-xl px-3 py-3 mb-4 transition-all duration-200 ${
-                  isSidebarCollapsed ? "justify-center" : "gap-5"
-                } ${
-                  isActive
-                    ? "bg-primary text-black shadow-lg"
-                    : "text-text-secondary hover:bg-text-secondary/10"
-                }`
-              }
-            >
-              <Icon />
-              <span
-                className={`text-lg font-bold ${isSidebarCollapsed ? "opacity-0 w-0" : "opacity-100 w-auto"}`}
-              >
-                {item.title}
-              </span>
-            </NavLink>
-          );
-        })}
-      </div>
-
-      {/* SIDEBAR FOOTER */}
-      <div className="mt-auto px-8 pb-4 pt-6 space-y-4 border-t border-text-secondary/10">
-        {/* settings */}
-
-        {/* logOut */}
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-3 text-red-400 hover:bg-text-secondary/10 rounded-xl px-3 py-2.5 w-full transition-all duration-200 hover:cursor-pointer"
-        >
-          <LogOut />
-          <span
-            className={`text-lg font-bold ${isSidebarCollapsed ? "opacity-0 w-0" : "opacity-100 w-auto"}`}
+          {/* icon */}
+          <div
+            className={`flex items-center justify-center h-15 w-15 rounded-xl bg-primary ${
+              isSidebarCollapsed
+                ? "lg:bg-transparent lg:text-primary"
+                : "bg-primary"
+            }`}
           >
-            Sign Out
-          </span>
-        </button>
+            <School size={40} />
+          </div>
+          {/* text */}
+          <div className={`block ${isSidebarCollapsed ? "lg:hidden" : ""}`}>
+            <h1 className="text-white text-2xl font-bold">SchooLynk</h1>
+            <p className="text-text-secondary/50 uppercase tracking-wide">
+              Primary Schools
+            </p>
+          </div>
+
+          {/* desktop collapse toggle */}
+          <div className="hidden lg:block">
+            {isSidebarCollapsed ? (
+              <button
+                onClick={() =>
+                  dispatch(setSidebarCollapsed(!isSidebarCollapsed))
+                }
+                className="rounded-lg hover:cursor-pointer py-2 transition-[width] duration-300 hover:bg-text-secondary/10"
+              >
+                <ChevronRight size={30} className=" text-text-secondary/40 " />
+              </button>
+            ) : (
+              <button
+                onClick={() =>
+                  dispatch(setSidebarCollapsed(!isSidebarCollapsed))
+                }
+                className=" rounded-lg hover:cursor-pointer py-2 transition-all duration-300 hover:bg-text-secondary/10"
+              >
+                {" "}
+                <ChevronLeft size={30} className=" text-text-secondary/40 " />
+              </button>
+            )}
+          </div>
+
+          {/* mobile close button */}
+          <button
+            onClick={() => dispatch(setMobileSidebarOpen(false))}
+            className="rounded-lg hover:cursor-pointer py-2 lg:hidden hover:bg-text-secondary/10"
+          >
+            <X size={26} className="text-text-secondary/60" />
+          </button>
+        </div>
+
+        {/* MAIN ITEMS SECTION */}
+        <div className="mt-10 px-4">
+          {menuItems.map((item, idx) => {
+            const Icon = item.icon;
+
+            return (
+              <NavLink
+                key={idx}
+                to={item.href}
+                end={item.href === "/teacher/dashboard"}
+                className={({ isActive }) =>
+                  `flex items-center rounded-xl px-3 py-3 mb-4 transition-all duration-200 ${
+                    isSidebarCollapsed ? "justify-center" : "gap-5"
+                  } ${
+                    isActive
+                      ? "bg-primary text-black shadow-lg"
+                      : "text-text-secondary hover:bg-text-secondary/10"
+                  }`
+                }
+              >
+                <Icon />
+                <span
+                  className={`text-lg font-bold ${isSidebarCollapsed ? "opacity-0 w-0" : "opacity-100 w-auto"}`}
+                >
+                  {item.title}
+                </span>
+              </NavLink>
+            );
+          })}
+        </div>
+
+        {/* SIDEBAR FOOTER */}
+        <div className="mt-auto px-8 pb-4 pt-6 space-y-4 border-t border-text-secondary/10">
+          {/* settings */}
+
+          {/* logOut */}
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-3 text-red-400 hover:bg-text-secondary/10 rounded-xl px-3 py-2.5 w-full transition-all duration-200 hover:cursor-pointer"
+          >
+            <LogOut />
+            <span
+              className={`text-lg font-bold ${isSidebarCollapsed ? "opacity-0 w-0" : "opacity-100 w-auto"}`}
+            >
+              Sign Out
+            </span>
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
