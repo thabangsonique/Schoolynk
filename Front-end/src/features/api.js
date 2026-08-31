@@ -121,6 +121,26 @@ export const api = createApi({
       providesTags: ["LearnerAttendance"],
     }),
 
+    // Mark a learner present or absent (upserts today's record)
+    markLearnerAttendance: build.mutation({
+      query: ({ learner_id, status }) => ({
+        url: "/api/learner-attendance",
+        method: "POST",
+        body: { learner_id, status },
+      }),
+      invalidatesTags: ["LearnerAttendance"],
+    }),
+
+    // Mark the whole class present or absent
+    bulkMarkLearnerAttendance: build.mutation({
+      query: ({ status }) => ({
+        url: "/api/learner-bulk-attendance",
+        method: "POST",
+        body: { status },
+      }),
+      invalidatesTags: ["LearnerAttendance"],
+    }),
+
     // Clock in
     clockIn: build.mutation({
       query: (teacherClockIn) => ({
@@ -304,6 +324,8 @@ export const {
   useGetMyLearnersQuery,
   useGetMyClassesQuery,
   useGetTodayAttendanceQuery,
+  useMarkLearnerAttendanceMutation,
+  useBulkMarkLearnerAttendanceMutation,
 
   useClockInMutation,
   useClockOutMutation,

@@ -214,6 +214,41 @@ export const getTodayAttendance = async (req, res) => {
       }
     }
 
+    //fetch each learner's all-time records to compute their overall attendance %.
+    let overallMap = {};
+
+    if (learnerIds.length > 0) {
+      const { data: allRecords, error: allRecordsError } = await supabaseAdmin
+        .from("learner_attendance")
+        .select("learner_id, status")
+        .in("learner_id", learnerIds);
+
+      if (allRecordsError) {
+        return res.status(400).json({
+          message: "Failed to fetch overall attendance records",
+          error: allRecordsError.message,
+        });
+      }
+
+      const countsByLearner = {};
+      for (const record of allRecords ?? []) {
+        if (!countsByLearner[record.learner_id]) {
+          countsByLearner[record.learner_id] = { present: 0, total: 0 };
+        }
+        countsByLearner[record.learner_id].total += 1;
+        if (record.status === "present") {
+          countsByLearner[record.learner_id].present += 1;
+        }
+      }
+
+      for (const [learnerId, { present, total }] of Object.entries(
+        countsByLearner,
+      )) {
+        overallMap[learnerId] =
+          total > 0 ? Math.round((present / total) * 100) : null;
+      }
+    }
+
     //merge teacher's learners with their attendance status's
     const roll = (learners ?? []).map((learner, index) => {
       const record = attendanceMap[learner.id];
@@ -231,6 +266,7 @@ export const getTodayAttendance = async (req, res) => {
         attendance_id: record?.id ?? null,
         status: record?.status ?? "unmarked",
         marked_at: record?.created_at ?? null,
+        overall_attendance: overallMap[learner.id] ?? null,
       };
     });
 
