@@ -416,6 +416,7 @@ export const getMyClasses = async (req, res) => {
         `id, 
         name,
          grade,
+         room_number,
          learners(
          id,
          student_number,
@@ -432,9 +433,11 @@ export const getMyClasses = async (req, res) => {
           )),
         class_subjects(
         id,
+        weekly_hours,
         subjects(
          id,
          name,
+         code,
          description)), teachers(id, profiles(id,first_name, last_name))`,
       )
       .eq("teacher_id", teacherRecord.id)
@@ -456,6 +459,7 @@ export const getMyClasses = async (req, res) => {
       learners: teacherClasses.learners ?? [],
       subjects: (teacherClasses.class_subjects ?? []).map((cs) => ({
         assignment_id: cs.id,
+        weekly_hours: cs.weekly_hours ?? null,
         ...cs.subjects,
         teacher: cs.teachers
           ? { id: cs.teachers.id, ...cs.teachers.profiles }

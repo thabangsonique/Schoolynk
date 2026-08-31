@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   isSidebarCollapsed: false,
+  mobileSidebarOpen: false,
   isCreateSubjectOpen: false,
   isCreateLearnerOpen: false,
   isCreateTeacherOpen: false,
@@ -16,6 +17,9 @@ export const globalSlice = createSlice({
   reducers: {
     setSidebarCollapsed: (state, action) => {
       state.isSidebarCollapsed = action.payload;
+    },
+    setMobileSidebarOpen: (state, action) => {
+      state.mobileSidebarOpen = action.payload;
     },
 
     setCreateSubject: (state, action) => {
@@ -45,6 +49,7 @@ export const {
   setCreateTeacher,
   setCreateClass,
   setSidebarCollapsed,
+  setMobileSidebarOpen,
   setViewTeacher,
 } = globalSlice.actions;
 export default globalSlice.reducer;

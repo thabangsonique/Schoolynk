@@ -1,4 +1,5 @@
 import { supabase, supabaseAdmin } from "../config/supabaseClient.js";
+import { creatActivity } from "../services/acitivityService.js";
 
 //marking single learner present or upsent.
 export const markLearnerAttendance = async (req, res) => {
@@ -214,6 +215,41 @@ export const getTodayAttendance = async (req, res) => {
       }
     }
 
+    //fetch each learner's all-time records to compute their overall attendance %.
+    let overallMap = {};
+
+    if (learnerIds.length > 0) {
+      const { data: allRecords, error: allRecordsError } = await supabaseAdmin
+        .from("learner_attendance")
+        .select("learner_id, status")
+        .in("learner_id", learnerIds);
+
+      if (allRecordsError) {
+        return res.status(400).json({
+          message: "Failed to fetch overall attendance records",
+          error: allRecordsError.message,
+        });
+      }
+
+      const countsByLearner = {};
+      for (const record of allRecords ?? []) {
+        if (!countsByLearner[record.learner_id]) {
+          countsByLearner[record.learner_id] = { present: 0, total: 0 };
+        }
+        countsByLearner[record.learner_id].total += 1;
+        if (record.status === "present") {
+          countsByLearner[record.learner_id].present += 1;
+        }
+      }
+
+      for (const [learnerId, { present, total }] of Object.entries(
+        countsByLearner,
+      )) {
+        overallMap[learnerId] =
+          total > 0 ? Math.round((present / total) * 100) : null;
+      }
+    }
+
     //merge teacher's learners with their attendance status's
     const roll = (learners ?? []).map((learner, index) => {
       const record = attendanceMap[learner.id];
@@ -231,6 +267,7 @@ export const getTodayAttendance = async (req, res) => {
         attendance_id: record?.id ?? null,
         status: record?.status ?? "unmarked",
         marked_at: record?.created_at ?? null,
+        overall_attendance: overallMap[learner.id] ?? null,
       };
     });
 
@@ -488,6 +525,19 @@ export const submitDailyAttendance = async (req, res) => {
     //summary submition display.
     const present = data.map((r) => r.status === "present").length;
     const absent = data.map((r) => r.status === "absent").length;
+
+    //track the register completion activity for the admin notifications.
+    await creatActivity({
+      actorProfileId: req.user.id,
+      eventType: "attendance_register_completed",
+      title: "Attendance register completed",
+      description: `Attendance register for class ${teacherClass.name} has been submitted by ${teacher.profiles.first_name} ${teacher.profiles.last_name}`,
+      metadata: {
+        teacher_id: teacher.id,
+        teacher_name: `${teacher.profiles.first_name} ${teacher.profiles.last_name}`,
+        class_name: teacherClass.name,
+      },
+    });
 
     return res.status(200).json({
       message: `Attendance register for class ${teacherClass.name} has been submitted.register is now locked`,

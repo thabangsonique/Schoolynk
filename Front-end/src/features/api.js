@@ -29,6 +29,7 @@ export const api = createApi({
     "StaffAttendance",
     "Dashboard",
     "RecentActivities",
+    "SchoolSettings",
   ],
 
   endpoints: (build) => ({
@@ -119,6 +120,26 @@ export const api = createApi({
     getTodayAttendance: build.query({
       query: () => "/api/learner-attendance",
       providesTags: ["LearnerAttendance"],
+    }),
+
+    // Mark a learner present or absent (upserts today's record)
+    markLearnerAttendance: build.mutation({
+      query: ({ learner_id, status }) => ({
+        url: "/api/learner-attendance",
+        method: "POST",
+        body: { learner_id, status },
+      }),
+      invalidatesTags: ["LearnerAttendance"],
+    }),
+
+    // Mark the whole class present or absent
+    bulkMarkLearnerAttendance: build.mutation({
+      query: ({ status }) => ({
+        url: "/api/learner-bulk-attendance",
+        method: "POST",
+        body: { status },
+      }),
+      invalidatesTags: ["LearnerAttendance"],
     }),
 
     // Clock in
@@ -291,6 +312,25 @@ export const api = createApi({
       transformResponse: (response) => response.activities ?? [],
       providesTags: ["RecentActivities", "Dashboard"],
     }),
+
+    // =========================
+    // SCHOOL SETTINGS
+    // =========================
+
+    getSchoolSettings: build.query({
+      query: () => "/api/school-settings",
+      transformResponse: (response) => response.school_settings ?? null,
+      providesTags: ["SchoolSettings"],
+    }),
+
+    updateNotificationsEnabled: build.mutation({
+      query: ({ enabled }) => ({
+        url: "/api/school-settings/notifications",
+        method: "PATCH",
+        body: { enabled },
+      }),
+      invalidatesTags: ["SchoolSettings"],
+    }),
   }),
 });
 
@@ -304,6 +344,8 @@ export const {
   useGetMyLearnersQuery,
   useGetMyClassesQuery,
   useGetTodayAttendanceQuery,
+  useMarkLearnerAttendanceMutation,
+  useBulkMarkLearnerAttendanceMutation,
 
   useClockInMutation,
   useClockOutMutation,
@@ -322,4 +364,7 @@ export const {
   useGetStaffOverviewQuery,
   useGetWeeklyLearnerAttendanceQuery,
   useGetRecentActivitiesQuery,
+
+  useGetSchoolSettingsQuery,
+  useUpdateNotificationsEnabledMutation,
 } = api;
