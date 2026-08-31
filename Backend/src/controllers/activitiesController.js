@@ -15,7 +15,8 @@ export const getRecentActivities = async (req, res) => {
         title,
         description,
         metadata,
-        created_at
+        created_at,
+        actors:profiles!actor_profile_id(first_name, last_name)
       `,
       )
       .order("created_at", { ascending: false })
@@ -29,8 +30,22 @@ export const getRecentActivities = async (req, res) => {
       });
     }
 
+    const enriched = (data ?? []).map((activity) => {
+      const profile = Array.isArray(activity.actors)
+        ? activity.actors[0]
+        : activity.actors;
+      return {
+        ...activity,
+        actor_name: profile
+          ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
+          : null,
+        //expose the raw profile array under "actors" is not needed by the UI.
+        actors: undefined,
+      };
+    });
+
     return res.status(200).json({
-      activities: data,
+      activities: enriched,
     });
   } catch (error) {
     console.error("Get activities error:", error);

@@ -146,14 +146,25 @@ export default function AdminSidebar() {
       {/* SIDEBAR FOOTER */}
       <div className="mt-auto px-8 pb-4 pt-6 space-y-4 border-t border-text-secondary/10">
         {/* settings */}
-        <div className="flex items-center gap-3 text-text-secondary">
+        <NavLink
+          to="/admin/dashboard/settings"
+          className={({ isActive }) =>
+            `flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 ${
+              isSidebarCollapsed ? "justify-center" : "gap-3"
+            } ${
+              isActive
+                ? "bg-primary text-black shadow-lg"
+                : "text-text-secondary hover:bg-text-secondary/10 hover:text-white"
+            }`
+          }
+        >
           <Settings />
           <span
             className={`text-lg font-bold ${isSidebarCollapsed ? "opacity-0 w-0" : "opacity-100 w-auto"}`}
           >
             Settings
           </span>
-        </div>
+        </NavLink>
         {/* logOut */}
         <button
           onClick={handleSignOut}

@@ -9,6 +9,7 @@ import subjectsRoutes from "../src/routes/subjectsRoutes.js";
 import learnerAttendanceRoutes from "../src/routes/learnerAttendanceRoutes.js";
 import adminAttendanceRoutes from "../src/routes/adminAttendanceRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
+import schoolSettingsRoutes from "./routes/schoolSettingsRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -26,6 +27,7 @@ app.use("/api", subjectsRoutes);
 app.use("/api", learnerAttendanceRoutes);
 app.use("/api", adminAttendanceRoutes);
 app.use("/api", activityRoutes);
+app.use("/api", schoolSettingsRoutes);
 
 const port = process.env.PORT || 3001;
 

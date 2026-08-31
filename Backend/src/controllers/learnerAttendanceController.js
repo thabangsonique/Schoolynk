@@ -1,4 +1,5 @@
 import { supabase, supabaseAdmin } from "../config/supabaseClient.js";
+import { creatActivity } from "../services/acitivityService.js";
 
 //marking single learner present or upsent.
 export const markLearnerAttendance = async (req, res) => {
@@ -524,6 +525,19 @@ export const submitDailyAttendance = async (req, res) => {
     //summary submition display.
     const present = data.map((r) => r.status === "present").length;
     const absent = data.map((r) => r.status === "absent").length;
+
+    //track the register completion activity for the admin notifications.
+    await creatActivity({
+      actorProfileId: req.user.id,
+      eventType: "attendance_register_completed",
+      title: "Attendance register completed",
+      description: `Attendance register for class ${teacherClass.name} has been submitted by ${teacher.profiles.first_name} ${teacher.profiles.last_name}`,
+      metadata: {
+        teacher_id: teacher.id,
+        teacher_name: `${teacher.profiles.first_name} ${teacher.profiles.last_name}`,
+        class_name: teacherClass.name,
+      },
+    });
 
     return res.status(200).json({
       message: `Attendance register for class ${teacherClass.name} has been submitted.register is now locked`,

@@ -134,14 +134,7 @@ export default function TeacherSidebar() {
       {/* SIDEBAR FOOTER */}
       <div className="mt-auto px-8 pb-4 pt-6 space-y-4 border-t border-text-secondary/10">
         {/* settings */}
-        <div className="flex items-center gap-3 text-text-secondary">
-          <Settings />
-          <span
-            className={`text-lg font-bold ${isSidebarCollapsed ? "opacity-0 w-0" : "opacity-100 w-auto"}`}
-          >
-            Settings
-          </span>
-        </div>
+
         {/* logOut */}
         <button
           onClick={handleSignOut}

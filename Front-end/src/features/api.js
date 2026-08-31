@@ -29,6 +29,7 @@ export const api = createApi({
     "StaffAttendance",
     "Dashboard",
     "RecentActivities",
+    "SchoolSettings",
   ],
 
   endpoints: (build) => ({
@@ -311,6 +312,25 @@ export const api = createApi({
       transformResponse: (response) => response.activities ?? [],
       providesTags: ["RecentActivities", "Dashboard"],
     }),
+
+    // =========================
+    // SCHOOL SETTINGS
+    // =========================
+
+    getSchoolSettings: build.query({
+      query: () => "/api/school-settings",
+      transformResponse: (response) => response.school_settings ?? null,
+      providesTags: ["SchoolSettings"],
+    }),
+
+    updateNotificationsEnabled: build.mutation({
+      query: ({ enabled }) => ({
+        url: "/api/school-settings/notifications",
+        method: "PATCH",
+        body: { enabled },
+      }),
+      invalidatesTags: ["SchoolSettings"],
+    }),
   }),
 });
 
@@ -344,4 +364,7 @@ export const {
   useGetStaffOverviewQuery,
   useGetWeeklyLearnerAttendanceQuery,
   useGetRecentActivitiesQuery,
+
+  useGetSchoolSettingsQuery,
+  useUpdateNotificationsEnabledMutation,
 } = api;

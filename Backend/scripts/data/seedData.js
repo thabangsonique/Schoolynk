@@ -6,6 +6,7 @@ export const seedData = {
     geo_radius_meters: 150,
     clock_in_start: "06:00:00",
     clock_in_deadline: "08:00:00",
+    notifications_enabled: true,
   },
 
   accounts: [

@@ -5,6 +5,7 @@ import heroImg from "./assets/hero.png";
 import { getCurrentUserProfile } from "./services/authService";
 import "./index.css";
 import Login from "./pages/Login";
+import ConfigureSchool from "./pages/ConfigureSchool";
 import AdminDashboard from "./pages/AdminDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import { Loader } from "lucide-react";
@@ -16,6 +17,7 @@ import Learners from "./pages/admin-pages/Learners.jsx";
 import Classes from "./pages/admin-pages/Classes.jsx";
 import Subjects from "./pages/admin-pages/Subjects.jsx";
 import Attendance from "./pages/admin-pages/Attendance.jsx";
+import Settings from "./pages/admin-pages/Settings.jsx";
 import TeacherDashboardHome from "./pages/teacher-pages/TeacherDashboardHome.jsx";
 import MyClass from "./pages/teacher-pages/MyClass.jsx";
 import MyLearners from "./pages/teacher-pages/MyLearners.jsx";
@@ -80,6 +82,8 @@ function App() {
       <Route path="/" element={<HomeRedirect />} />
       {/* login page- if user not logged in */}
       <Route path="/login" element={<Login />} />
+      {/* create account + configure school */}
+      <Route path="/configure-school" element={<ConfigureSchool />} />
       {/* protected routes */}
       <Route
         path="/admin/dashboard"
@@ -96,6 +100,7 @@ function App() {
         <Route path="classes" element={<Classes />} />
         <Route path="subjects" element={<Subjects />} />
         <Route path="attendance" element={<Attendance />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
       <Route
         path="/teacher/dashboard"

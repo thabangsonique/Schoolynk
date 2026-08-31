@@ -233,7 +233,10 @@ export default function Login() {
             <p className="mt-5 text-center text-text-secondary">
               {" "}
               Need an account?
-              <span className="text-primary ml-1 hover:cursor-pointer hover:text-text-secondary transition-all duration-300">
+              <span
+                onClick={() => navigate("/configure-school")}
+                className="text-primary ml-1 hover:cursor-pointer hover:text-text-secondary transition-all duration-300"
+              >
                 Create Account
               </span>
             </p>
