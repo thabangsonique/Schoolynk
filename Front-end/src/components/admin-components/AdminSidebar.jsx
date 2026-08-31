@@ -12,10 +12,13 @@ import {
   LogOut,
   ChevronRight,
   ChevronLeft,
-  ChevronsLeft,
+  X,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { setSidebarCollapsed } from "../../features/globalSlice";
+import {
+  setSidebarCollapsed,
+  setMobileSidebarOpen,
+} from "../../features/globalSlice";
 import { useAuth } from "../../context/authContext";
 
 const menuItems = [
@@ -64,47 +67,81 @@ export default function AdminSidebar() {
   const isSidebarCollapsed = useSelector(
     (state) => state.global.isSidebarCollapsed,
   );
-  const sidebarClasses = `bg-card-2 fixed hide-scrollbar z-60 flex flex-col overflow-y-auto h-[100%] py-5 border-r border-text-secondary/10 transition-all duration-300 ${isSidebarCollapsed ? "w-[100px]" : "w-[300px]"}`;
+  const mobileSidebarOpen = useSelector(
+    (state) => state.global.mobileSidebarOpen,
+  );
+
+  const widthClass = isSidebarCollapsed ? "lg:w-[100px] w-[300px]" : "w-[300px]";
+
+  //desktop: fixed positioned sidebar. mobile: slides in as an overlay drawer.
+  const sidebarClasses = `bg-card-2 hide-scrollbar z-60 flex flex-col overflow-y-auto h-full py-5 border-r border-text-secondary/10 transition-all duration-300 ${widthClass} fixed top-0 left-0 -translate-x-full lg:translate-x-0 ${mobileSidebarOpen ? "translate-x-0" : ""}`;
+
   return (
-    <div className={sidebarClasses}>
+    <>
+      {/* mobile/tablet backdrop */}
+      {mobileSidebarOpen && (
+        <div
+          onClick={() => dispatch(setMobileSidebarOpen(false))}
+          className="fixed inset-0 z-50 bg-black/60 lg:hidden"
+        />
+      )}
+
+      <div className={sidebarClasses}>
       {/* //header section. */}
       <div
-        className={`w-full flex items-center gap-3 px-8 pb-5 border-b border-text-secondary/10 ${isSidebarCollapsed ? "justify-center" : "justify-between"}`}
+        className={`w-full flex items-center gap-3 px-8 pb-5 border-b border-text-secondary/10 justify-between ${
+          isSidebarCollapsed ? "lg:justify-center" : "justify-between"
+        }`}
       >
         {/* icon */}
         <div
-          className={`flex items-center justify-center h-15 w-15 rounded-xl ${isSidebarCollapsed ? "bg-transparent text-primary" : "bg-primary "}`}
+          className={`flex items-center justify-center h-15 w-15 rounded-xl bg-primary ${
+            isSidebarCollapsed ? "lg:bg-transparent lg:text-primary" : "bg-primary"
+          }`}
         >
           <School size={40} />
         </div>
-        {/* text */}
-        {!isSidebarCollapsed && (
-          <div>
-            <h1 className="text-white text-2xl font-bold">SchooLynk</h1>
+        {/* text -> always shown on the mobile drawer, shown on desktop only when expanded */}
+        <div
+          className={`block ${isSidebarCollapsed ? "lg:hidden" : ""}`}
+        >
+          <h1 className="text-white text-2xl font-bold">SchooLynk</h1>
+          <p className="text-text-secondary/50 uppercase tracking-wide">
+            Primary Schools
+          </p>
+        </div>
 
-            <p className="text-text-secondary/50 uppercase tracking-wide">
-              Primary Schools
-            </p>
-          </div>
-        )}
+        {/* sidebar toggle - desktop only. mobile uses the close button. */}
+        <div className="hidden lg:block">
+          {isSidebarCollapsed ? (
+            <button
+              onClick={() =>
+                dispatch(setSidebarCollapsed(!isSidebarCollapsed))
+              }
+              className="rounded-lg hover:cursor-pointer py-2 transition-[width] duration-300 hover:bg-text-secondary/10"
+            >
+              <ChevronRight size={30} className=" text-text-secondary/40 " />
+            </button>
+          ) : (
+            <button
+              onClick={() =>
+                dispatch(setSidebarCollapsed(!isSidebarCollapsed))
+              }
+              className=" rounded-lg hover:cursor-pointer py-2 transition-all duration-300 hover:bg-text-secondary/10"
+            >
+              {" "}
+              <ChevronLeft size={30} className=" text-text-secondary/40 " />
+            </button>
+          )}
+        </div>
 
-        {/* sidebar toggle */}
-        {isSidebarCollapsed ? (
-          <button
-            onClick={() => dispatch(setSidebarCollapsed(!isSidebarCollapsed))}
-            className="rounded-lg hover:cursor-pointer py-2 transition-[width] duration-300 hover:bg-text-secondary/10"
-          >
-            <ChevronRight size={30} className=" text-text-secondary/40 " />
-          </button>
-        ) : (
-          <button
-            onClick={() => dispatch(setSidebarCollapsed(!isSidebarCollapsed))}
-            className=" rounded-lg hover:cursor-pointer py-2 transition-all duration-300 hover:bg-text-secondary/10"
-          >
-            {" "}
-            <ChevronLeft size={30} className=" text-text-secondary/40 " />
-          </button>
-        )}
+        {/* mobile close button (only on the drawer) */}
+        <button
+          onClick={() => dispatch(setMobileSidebarOpen(false))}
+          className="rounded-lg hover:cursor-pointer py-2 lg:hidden hover:bg-text-secondary/10"
+        >
+          <X size={26} className="text-text-secondary/60" />
+        </button>
       </div>
 
       {/* MAIN ITEMS SECTION */}
@@ -123,8 +160,10 @@ export default function AdminSidebar() {
               to={item.href}
               end={item.href === "/admin/dashboard"}
               className={({ isActive }) =>
-                `flex items-center rounded-xl px-3 py-3 mb-4 transition-all duration-200 ${
-                  isSidebarCollapsed ? "justify-center" : "gap-5"
+                `flex items-center rounded-xl px-3 py-3 mb-4 transition-all duration-200 gap-5 ${
+                  isSidebarCollapsed
+                    ? "lg:justify-center lg:gap-0"
+                    : "gap-5"
                 } ${
                   isActive
                     ? "bg-primary text-black shadow-lg"
@@ -134,7 +173,9 @@ export default function AdminSidebar() {
             >
               <Icon />
               <span
-                className={`text-lg font-bold ${isSidebarCollapsed ? "opacity-0 w-0" : "opacity-100 w-auto"}`}
+                className={`text-lg font-bold opacity-100 w-auto ${
+                  isSidebarCollapsed ? "lg:opacity-0 lg:w-0 lg:hidden" : ""
+                }`}
               >
                 {item.title}
               </span>
@@ -149,8 +190,8 @@ export default function AdminSidebar() {
         <NavLink
           to="/admin/dashboard/settings"
           className={({ isActive }) =>
-            `flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 ${
-              isSidebarCollapsed ? "justify-center" : "gap-3"
+            `flex items-center rounded-xl px-3 py-2.5 transition-all duration-200 gap-3 ${
+              isSidebarCollapsed ? "lg:justify-center lg:gap-0" : "gap-3"
             } ${
               isActive
                 ? "bg-primary text-black shadow-lg"
@@ -160,7 +201,9 @@ export default function AdminSidebar() {
         >
           <Settings />
           <span
-            className={`text-lg font-bold ${isSidebarCollapsed ? "opacity-0 w-0" : "opacity-100 w-auto"}`}
+            className={`text-lg font-bold opacity-100 w-auto ${
+              isSidebarCollapsed ? "lg:opacity-0 lg:w-0 lg:hidden" : ""
+            }`}
           >
             Settings
           </span>
@@ -172,12 +215,15 @@ export default function AdminSidebar() {
         >
           <LogOut />
           <span
-            className={`text-lg font-bold ${isSidebarCollapsed ? "opacity-0 w-0" : "opacity-100 w-auto"}`}
+            className={`text-lg font-bold opacity-100 w-auto ${
+              isSidebarCollapsed ? "lg:opacity-0 lg:w-0 lg:hidden" : ""
+            }`}
           >
             Sign Out
           </span>
         </button>
       </div>
     </div>
+    </>
   );
 }
