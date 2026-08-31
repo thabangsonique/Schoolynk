@@ -1,7 +1,15 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useAuth } from "../../context/authContext";
 import Button from "../../components/global/Button";
+import {
+  setCreateTeacher,
+  setCreateLearner,
+  setCreateClass,
+} from "../../features/globalSlice";
+import AddTeacher from "../../components/admin-components/AddTeacher";
+import AddLearner from "../../components/admin-components/AddLearner";
+import CreateClass from "../../components/admin-components/CreateClass";
 import {
   CalendarCheck,
   ChevronRight,
@@ -28,8 +36,18 @@ import {
 export default function AdminDashboardHome() {
   const [selected, setSelected] = useState("Add Teacher");
   const { user, profile, loading, role } = useAuth();
+  const dispatch = useDispatch();
   const isSidebarCollapsed = useSelector(
     (state) => state.global.isSidebarCollapsed,
+  );
+  const createTeacherOpen = useSelector(
+    (state) => state.global.isCreateTeacherOpen,
+  );
+  const createLearnerOpen = useSelector(
+    (state) => state.global.isCreateLearnerOpen,
+  );
+  const createClassOpen = useSelector(
+    (state) => state.global.isCreateClassOpen,
   );
 
   //fetch all teachers.
@@ -38,6 +56,7 @@ export default function AdminDashboardHome() {
     error,
     isError,
     isLoading,
+    refetch: refetchTeachers,
   } = useGetTeachersQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
@@ -48,6 +67,7 @@ export default function AdminDashboardHome() {
     error: errorLearners,
     isError: isErrorLearners,
     isLoading: isloadingLearners,
+    refetch: refetchLearners,
   } = useGetLearnersQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
@@ -58,6 +78,7 @@ export default function AdminDashboardHome() {
     error: errorClasses,
     isError: isErrorClasses,
     isLoading: isloadingClasses,
+    refetch: refetchClasses,
   } = useGetAllClassesQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
@@ -115,7 +136,7 @@ export default function AdminDashboardHome() {
         {/* right-side */}
         <div className="flex gap-4">
           <Button
-            onClick={() => setSelected("Add Teacher")}
+            onClick={() => dispatch(setCreateTeacher(true))}
             selected={selected}
             setSelected={setSelected}
             Icon={
@@ -126,7 +147,7 @@ export default function AdminDashboardHome() {
             title="Add Teacher"
           />
           <Button
-            onClick={() => setSelected("Add Learner")}
+            onClick={() => dispatch(setCreateLearner(true))}
             selected={selected}
             setSelected={setSelected}
             Icon={
@@ -137,7 +158,7 @@ export default function AdminDashboardHome() {
             title="Add Learner"
           />
           <Button
-            onClick={() => setSelected("Create Class")}
+            onClick={() => dispatch(setCreateClass(true))}
             selected={selected}
             setSelected={setSelected}
             Icon={
@@ -385,6 +406,29 @@ export default function AdminDashboardHome() {
         <RecentActivity />
         <ClassOverview />
       </div>
+
+      {/* MODALS */}
+      {createTeacherOpen && (
+        <AddTeacher
+          classes={classes?.classes ?? []}
+          onCreated={refetchTeachers}
+          onClose={() => dispatch(setCreateTeacher(false))}
+        />
+      )}
+      {createLearnerOpen && (
+        <AddLearner
+          classes={classes?.classes ?? []}
+          onCreated={refetchLearners}
+          onClose={() => dispatch(setCreateLearner(false))}
+        />
+      )}
+      {createClassOpen && (
+        <CreateClass
+          teachers={teachers}
+          onCreated={refetchClasses}
+          onClose={() => dispatch(setCreateClass(false))}
+        />
+      )}
     </div>
   );
 }
